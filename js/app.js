@@ -95,8 +95,11 @@
     document.body.className = '';
   }
 
-  var stack = ['v-home'];
   function paint(id) {
+    if (id !== 'v-quiz' && G && !G.answered) {
+      G.hiddenAt = now();
+      cancelAnimationFrame(raf);
+    }
     for (var i = 0; i < VIEWS.length; i++) {
       var el = $(VIEWS[i]);
       var on = VIEWS[i] === id;
@@ -109,6 +112,11 @@
       var stage = cur.querySelector('.stage');
       if (stage) stage.scrollTop = 0;
     }
+    if (id === 'v-quiz' && G && !G.answered && G.hiddenAt) {
+      G.start += now() - G.hiddenAt;
+      G.hiddenAt = 0;
+      tick();
+    }
     if (id === 'v-home') renderHome();
     if (id === 'v-me') renderMe();
     if (id === 'v-pack') renderPack();
@@ -116,12 +124,7 @@
     if (id === 'v-trash') renderTrash();
     if (id === 'v-result' && current) renderResult(current);
   }
-  function go(id) { stack = [id]; paint(id); }
-  function openPage(id) { stack.push(id); paint(id); }
-  function back() {
-    if (stack.length > 1) stack.pop();
-    paint(stack[stack.length - 1] || 'v-home');
-  }
+  function show(id) { paint(id); }
 
   var album = [];
   var trash = [];
@@ -275,7 +278,7 @@
       picks: idxs, i: 0, rounds: [], streak: 0, maxStreak: 0,
       start: 0, hiddenAt: 0, answered: false, order: []
     };
-    go('v-quiz');
+    show('v-quiz');
     renderQuestion();
   }
 
@@ -284,6 +287,7 @@
     G.answered = false;
     G.order = shuffle([0, 1, 2, 3]);
     setSheet('q-modal', false);
+    $('q-dock').className = 'dock is-hidden';
     $('q-count').textContent = (G.i + 1) + ' / ' + ROUND;
     $('q-prog').style.width = ((G.i + 1) / ROUND * 100) + '%';
     $('q-fig').innerHTML = figMarkup(q);
@@ -295,8 +299,6 @@
     });
     $('q-opts').innerHTML = h;
     $('q-opts').className = 'opts';
-    $('q-next-t').textContent = '先选一个';
-    $('q-next').className = 'box btn-main is-off';
     G.start = now();
     tick();
   }
@@ -345,16 +347,26 @@
     }
     $('q-opts').className = 'opts locked';
     var pts = sc.pts + sc.bonus;
-    var label = correct ? ('+' + pts + (sc.bonus ? '  连击 +' + sc.bonus : '')) : (timeout ? '超时 +0' : '没认出 +0');
-    $('q-pts').textContent = label;
-    $('q-pts').className = 'pill ' + (correct ? 'pill-lime' : '');
-    $('q-modal-word').textContent = (correct ? '正名  ' : '正名是  ') + q.options[q.correctIndex];
+    $('q-pts').textContent = correct ? '对了' : (timeout ? '时间到了，没关系' : '差一点点');
+    $('q-pts').className = 'sheet-kicker' + (correct ? ' ok' : '');
+    $('q-modal-word').textContent = q.options[q.correctIndex];
     $('q-fact-t').textContent = q.fact;
+    $('q-bonus').textContent = correct ? ('+' + pts + (sc.bonus ? '　连击 +' + sc.bonus : '')) : '';
     $('q-sec').textContent = timeout ? '时间到' : (t.toFixed(1) + ' 秒');
     $('q-sec').className = 'pill timer-pill';
-    $('q-next-t').textContent = G.i + 1 >= ROUND ? '看结算' : '下一题';
-    $('q-next').className = 'box btn-main';
+    var nextLabel = G.i + 1 >= ROUND ? '看结算' : '下一题';
+    $('q-next-t').textContent = nextLabel;
+    $('q-dock-t').textContent = nextLabel;
+    $('q-dock').className = 'dock is-hidden';
     setSheet('q-modal', true);
+  }
+  function advance() {
+    if (!G || !G.answered) return;
+    setSheet('q-modal', false);
+    $('q-dock').className = 'dock is-hidden';
+    if (G.i + 1 >= ROUND) { finish(); return; }
+    G.i += 1;
+    renderQuestion();
   }
 
   function listHTML(card) {
@@ -396,6 +408,7 @@
     var maxStreak = G.maxStreak;
     G = null;
     setSheet('q-modal', false);
+    $('q-dock').className = 'dock is-hidden';
     var fp = F.encode(rounds);
     var sc = F.score(rounds, BANK);
     var time = rounds.reduce(function (s, r) { return s + r.t; }, 0);
@@ -419,7 +432,7 @@
       if (r.correct && stats.dex.indexOf(r.idx) < 0) stats.dex.push(r.idx);
     });
     touchDay();
-    go('v-result');
+    show('v-result');
     var ok = await saveData();
     if (!ok) toast('局数没存上，这局卡片只在这次打开里有效');
   }
@@ -537,7 +550,9 @@
 
   function bindMask(id) {
     $(id).addEventListener('click', function (e) {
-      if (e.target === this) setSheet(id, false);
+      if (e.target !== this) return;
+      setSheet(id, false);
+      if (id === 'q-modal') $('q-dock').className = (G && G.answered) ? 'dock' : 'dock is-hidden';
     });
   }
   function findAttr(node, root, name) {
@@ -549,29 +564,29 @@
 
   function bind() {
     $('btn-start').addEventListener('click', startGame);
-    $('btn-pack').addEventListener('click', function () { openPage('v-pack'); });
-    $('btn-me').addEventListener('click', function () { openPage('v-me'); });
-    $('me-back').addEventListener('click', back);
-    $('pack-back').addEventListener('click', back);
-    $('dex-back').addEventListener('click', back);
-    $('trash-back').addEventListener('click', back);
-    $('me-pack-more').addEventListener('click', function () { openPage('v-pack'); });
-    $('me-dex').addEventListener('click', function () { openPage('v-dex'); });
-    $('me-trash').addEventListener('click', function () { openPage('v-trash'); });
+    $('btn-pack').addEventListener('click', function () { show('v-pack'); });
+    $('btn-me').addEventListener('click', function () { show('v-me'); });
+    $('me-back').addEventListener('click', function () { closeSheets(); show('v-home'); });
+    $('pack-back').addEventListener('click', function () { show('v-me'); });
+    $('dex-back').addEventListener('click', function () { show('v-me'); });
+    $('trash-back').addEventListener('click', function () { show('v-me'); });
+    $('me-pack-more').addEventListener('click', function () { show('v-pack'); });
+    $('me-dex').addEventListener('click', function () { show('v-dex'); });
+    $('me-trash').addEventListener('click', function () { show('v-trash'); });
+    $('q-home').addEventListener('click', function () {
+      closeSheets();
+      G = null;
+      cancelAnimationFrame(raf);
+      show('v-home');
+    });
 
     $('q-opts').addEventListener('click', function (e) {
       var el = findAttr(e.target, this, 'data-oi');
       if (!el) return;
       answer(+el.getAttribute('data-oi'));
     });
-    $('q-next').addEventListener('click', function () {
-      if (!G || !G.answered) return;
-      setSheet('q-modal', false);
-      if (G.i + 1 >= ROUND) { finish(); return; }
-      G.i += 1;
-      renderQuestion();
-    });
-    $('q-modal-x').addEventListener('click', function () { setSheet('q-modal', false); });
+    $('q-next').addEventListener('click', advance);
+    $('q-dock-next').addEventListener('click', advance);
 
     $('r-toggle').addEventListener('click', function () {
       var open = $('r-list').className.indexOf('is-collapsed') >= 0;
@@ -581,8 +596,8 @@
     $('r-add').addEventListener('click', function () { addToAlbum(current, -1); });
     $('r-save-av').addEventListener('click', function () { saveImg('avatar', current); });
     $('r-again').addEventListener('click', startGame);
-    $('r-home').addEventListener('click', function () { go('v-home'); });
-    $('r-me').addEventListener('click', function () { openPage('v-me'); });
+    $('r-home').addEventListener('click', function () { closeSheets(); show('v-home'); });
+    $('r-me').addEventListener('click', function () { show('v-me'); });
 
     function onPackClick(e, root) {
       var el = findAttr(e.target, root, 'data-i');
@@ -637,7 +652,7 @@
     $('full-x').addEventListener('click', function () { setSheet('full', false); });
     $('full-goto').addEventListener('click', function () {
       setSheet('full', false);
-      openPage('v-pack');
+      show('v-pack');
     });
     $('full-list').addEventListener('click', function (e) {
       var el = findAttr(e.target, this, 'data-i');
@@ -713,5 +728,5 @@
   };
 
   bind();
-  loadData().then(function () { renderHome(); }, function () { renderHome(); });
+  loadData().then(function () { show('v-home'); }, function () { show('v-home'); });
 })();
