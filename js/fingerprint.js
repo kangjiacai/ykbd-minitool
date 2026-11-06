@@ -1,49 +1,69 @@
 /* 卡指纹 + 计分 + 称号 + 指纹中文名
- * 指纹 = 版本(2bit) + 5 × [题库序号 6bit, 对错 1bit, 用时秒 4bit] + 校验 3bit = 60bit → 12 位 Crockford Base32
+ * 指纹 = 版本(2bit) + 5 × [题库序号 N bit, 对错 1bit, 用时秒 4bit] + 校验 3bit
+ *   - 64 题：N=6，60bit → 12 位码
+ *   - 200 题：N=8，70bit → 14 位码（题库扩过 63 条时自动切）
  * 可由指纹逆推本局抽了哪 5 题、对错、每题用时。形象与中文名都由这串编码决定。
  */
 (function () {
   var F = {};
   var ALPHA = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  var VER = 1;
+  var BANK_LEN = (window.YKBD_BANK && window.YKBD_BANK.length) || 64;
+  /* 6 bit 装 64 条（idx 0–63）；超过 64 条时自动用 8 bit，码从 12 位变 14 位 */
+  var IDX_BITS = BANK_LEN > 64 ? 8 : 6;
+  var VER = IDX_BITS === 8 ? 2 : 1;
+  var CODE_LEN = (2 + 5 * (IDX_BITS + 5) + 3) / 5;
   F.TIME_LIMIT = 14;
   F.PACK_MAX = 8;
+  F.IDX_BITS = IDX_BITS;
+  F.VER = VER;
+  F.CODE_LEN = CODE_LEN;
 
   function pushBits(arr, val, n) { for (var i = n - 1; i >= 0; i--) arr.push((val >> i) & 1); }
   function readBits(arr, pos, n) { var v = 0; for (var i = 0; i < n; i++) v = (v << 1) | arr[pos + i]; return v; }
   function check(bits) { var c = 0; for (var i = 0; i < bits.length; i++) c = (c + bits[i] * ((i % 7) + 1)) % 8; return c; }
+  function fmt(s) {
+    var out = '';
+    for (var i = 0; i < s.length; i += 4) { if (i) out += '-'; out += s.slice(i, i + 4); }
+    return out;
+  }
 
   F.encode = function (rounds) {
     var bits = [];
     pushBits(bits, VER, 2);
     rounds.forEach(function (r) {
-      pushBits(bits, r.idx & 63, 6);
+      pushBits(bits, r.idx & ((1 << IDX_BITS) - 1), IDX_BITS);
       pushBits(bits, r.correct ? 1 : 0, 1);
       pushBits(bits, Math.max(0, Math.min(15, Math.ceil(r.t))), 4);
     });
     pushBits(bits, check(bits), 3);
     var s = '';
     for (var i = 0; i < bits.length; i += 5) s += ALPHA.charAt(readBits(bits, i, 5));
-    return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12);
+    return fmt(s);
   };
 
   F.decode = function (code) {
     var s = String(code || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
-    if (s.length !== 12) return null;
+    var idxBits = s.length === 12 ? 6 : (s.length === 14 ? 8 : 0);
+    if (!idxBits) return null;
     var bits = [];
-    for (var i = 0; i < 12; i++) {
+    for (var i = 0; i < s.length; i++) {
       var v = ALPHA.indexOf(s.charAt(i));
       if (v < 0) return null;
       pushBits(bits, v, 5);
     }
-    var body = bits.slice(0, 57);
-    if (readBits(bits, 57, 3) !== check(body)) return null;
-    if (readBits(bits, 0, 2) !== VER) return null;
+    var bodyLen = 2 + 5 * (idxBits + 5);
+    if (bits.length !== bodyLen + 3) return null;
+    if (readBits(bits, bodyLen, 3) !== check(bits.slice(0, bodyLen))) return null;
+    if (readBits(bits, 0, 2) !== (idxBits === 6 ? 1 : 2)) return null;
     var rounds = [];
     var p = 2;
     for (var k = 0; k < 5; k++) {
-      rounds.push({ idx: readBits(bits, p, 6), correct: !!bits[p + 6], t: readBits(bits, p + 7, 4) });
-      p += 11;
+      rounds.push({
+        idx: readBits(bits, p, idxBits),
+        correct: !!bits[p + idxBits],
+        t: readBits(bits, p + idxBits + 1, 4)
+      });
+      p += idxBits + 5;
     }
     return rounds;
   };

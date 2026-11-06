@@ -1,6 +1,6 @@
-/* 你可能不知道 · v1.1
- * 首页 → 答题（弹窗反馈）→ 结算（手动入包）→ 我的 / 卡包 / 图鉴 / 垃圾桶
- * 右上角留给容器胶囊。新局不自动入卡包。满员不静默踢人。
+/* 你可能不知道 · v1.5
+ * 首页 → 答题（弹窗反馈）→ 结算（自动入卡册）→ 卡册 / 精选 / 图鉴 / 垃圾桶
+ * 卡册不限量；精选 8 张展示在首页。卡面形象与命名以本仓库 v1.4 引擎为准。
  */
 (function () {
   var BANK = window.YKBD_BANK;
@@ -10,15 +10,17 @@
   var FIG = window.YKBD_FIG;
   var ROUND = 5;
   var LIMIT = F.TIME_LIMIT;
-  var PACK_MAX = F.PACK_MAX;
+  var FAV_MAX = 8;
   var TRASH_MAX = 20;
+  var PACK_PAGE = 30;
   var LETTERS = ['A', 'B', 'C', 'D'];
   var VIEWS = ['v-home', 'v-quiz', 'v-result', 'v-me', 'v-pack', 'v-dex', 'v-trash'];
-  var SHEETS = ['q-modal', 'sheet', 'word', 'preview', 'full', 'drop'];
+  var SHEETS = ['q-modal', 'sheet', 'word', 'preview', 'drop'];
   var K_OLD = 'ykbd_v1_pack';
   var K_ALBUM = 'ykbd_v1_album';
   var K_TRASH = 'ykbd_v1_trash';
   var K_STATS = 'ykbd_v1_stats';
+  var K_FAV = 'ykbd_v1_fav';
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -66,6 +68,10 @@
     if (!Array.isArray(arr)) return [];
     return arr.filter(function (c) { return c && c.fp; }).map(copyCard);
   }
+  function findIdx(arr, fp) {
+    for (var i = 0; i < arr.length; i++) if (arr[i].fp === fp) return i;
+    return -1;
+  }
 
   var toastTimer = 0;
   function toast(msg) {
@@ -76,9 +82,7 @@
     toastTimer = setTimeout(function () { t.className = 'toast'; }, 2400);
   }
 
-  function sheetOpen(id) {
-    return $(id).className.indexOf(' on') >= 0;
-  }
+  function sheetOpen(id) { return $(id).className.indexOf(' on') >= 0; }
   function anySheet() {
     for (var i = 0; i < SHEETS.length; i++) if (sheetOpen(SHEETS[i])) return true;
     return false;
@@ -94,6 +98,37 @@
     $('pv-img').removeAttribute('src');
     document.body.className = '';
   }
+
+  /* ---------- 视图栈：二级页统一 back() ---------- */
+  var stack = ['v-home'];
+  function show(id, opts) {
+    opts = opts || {};
+    if (opts.root) stack = [id];
+    else if (opts.replace) {
+      if (stack.length) stack[stack.length - 1] = id;
+      else stack = [id];
+    } else if (stack[stack.length - 1] !== id) {
+      stack.push(id);
+    }
+    paint(id);
+  }
+  function back() {
+    if (stack.length > 1) {
+      stack.pop();
+      paint(stack[stack.length - 1]);
+    } else {
+      show('v-home', { root: true });
+    }
+  }
+
+  var G = null;
+  var raf = 0;
+  var current = null;
+  var detailCard = null;
+  var packTab = 'all';
+  var packLimit = PACK_PAGE;
+  var dropFp = '';
+  var albumBusy = false;
 
   function paint(id) {
     if (id !== 'v-quiz' && G && !G.answered) {
@@ -130,10 +165,11 @@
     if (id === 'v-trash') renderTrash();
     if (id === 'v-result' && current) renderResult(current);
   }
-  function show(id) { paint(id); }
 
+  /* ---------- 数据 ---------- */
   var album = [];
   var trash = [];
+  var favorites = [];
   var stats = { games: 0, totalCorrect: 0, bestScore: 0, bestStreak: 0, dex: [], days: 0, lastDay: '' };
 
   function emptyStats() {
@@ -161,12 +197,26 @@
     }
     trash = normCards(await P.getData(K_TRASH, [])).slice(0, TRASH_MAX);
     stats = normStats(await P.getData(K_STATS, null));
+
+    var favRaw = await P.getData(K_FAV, { __missing: 1 });
+    if (favRaw && favRaw.__missing) {
+      /* 老版本没有精选：把现有卡册前 8 张设为精选，首页看起来不变 */
+      favorites = album.slice(0, FAV_MAX).map(function (c) { return c.fp; });
+      await P.setData(K_FAV, favorites);
+    } else if (Array.isArray(favRaw)) {
+      favorites = favRaw.filter(function (fp) {
+        return typeof fp === 'string' && findIdx(album, fp) >= 0;
+      }).slice(0, FAV_MAX);
+    } else {
+      favorites = [];
+    }
   }
   async function saveData() {
     var a = await P.setData(K_ALBUM, album);
     var b = await P.setData(K_TRASH, trash);
     var c = await P.setData(K_STATS, stats);
-    return a && b && c;
+    var d = await P.setData(K_FAV, favorites);
+    return a && b && c && d;
   }
   function touchDay() {
     var today = ymd(new Date());
@@ -176,10 +226,30 @@
   }
   function inAlbum(card) {
     if (!card) return false;
-    for (var i = 0; i < album.length; i++) if (album[i].fp === card.fp) return true;
-    return false;
+    return findIdx(album, card.fp) >= 0;
+  }
+  function inFav(fp) { return favorites.indexOf(fp) >= 0; }
+  function cardByFp(fp) {
+    var i = findIdx(album, fp);
+    return i >= 0 ? album[i] : null;
+  }
+  function addCard(card) {
+    if (!card || inAlbum(card)) return false;
+    album.unshift(copyCard(card));
+    return true;
+  }
+  function removeCard(fp) {
+    var i = findIdx(album, fp);
+    if (i < 0) return null;
+    var card = album[i];
+    album.splice(i, 1);
+    var fi = favorites.indexOf(fp);
+    if (fi >= 0) favorites.splice(fi, 1);
+    return card;
   }
   function pushTrash(card) {
+    var i = findIdx(trash, card.fp);
+    if (i >= 0) trash.splice(i, 1);
     trash.unshift(copyCard(card));
     var evicted = false;
     if (trash.length > TRASH_MAX) {
@@ -188,21 +258,38 @@
     }
     return evicted;
   }
+  function toggleFav(fp) {
+    var i = favorites.indexOf(fp);
+    if (i >= 0) { favorites.splice(i, 1); return 'removed'; }
+    if (favorites.length >= FAV_MAX) return 'full';
+    favorites.unshift(fp);
+    return 'added';
+  }
+  function refreshLists() {
+    renderHome();
+    renderMe();
+    renderPack();
+  }
 
   function renderHome() {
     $('home-day').textContent = stats.days > 0 ? ('连续 ' + stats.days + ' 天') : '还没开局';
     $('home-pack-n').textContent = String(album.length);
-    $('home-pack-max').textContent = '/' + PACK_MAX;
+    $('home-pack-max').textContent = ' 张';
+    $('home-fav-n').textContent = '精选 ' + favorites.length + '/' + FAV_MAX;
+    var list = favorites.length ? favorites : album.slice(0, 2).map(function (c) { return c.fp; });
     var figs = '';
-    var n = Math.min(2, album.length);
-    for (var i = 0; i < n; i++) figs += FIG.render(album[i].fp);
+    for (var i = 0; i < list.length; i++) figs += FIG.render(list[i]);
     $('home-figs').innerHTML = figs;
   }
 
-  function cardRow(c, i, extra) {
+  function cardRow(c) {
     var name = c.name || F.chineseName(c.fp);
-    return '<button class="box pack-item" type="button" data-i="' + i + '"><div class="av">' + FIG.render(c.fp) + '</div>' +
-      '<div class="pi-main"><div class="pi-t">' + esc(name) + '</div><div class="pi-s">' + esc(c.fp) + (extra || '') + '</div></div></button>';
+    var meta = [c.score ? (c.score + ' 分') : '', c.title || '', c.date || ''].filter(function (s) { return !!s; }).join(' · ');
+    return '<button class="box pack-item" type="button" data-fp="' + esc(c.fp) + '"><div class="av">' + FIG.render(c.fp) + '</div>' +
+      '<div class="pi-main"><div class="pi-t">' + esc(name) + (inFav(c.fp) ? '<span class="pi-fav">★</span>' : '') + '</div>' +
+      '<div class="pi-s">' + esc(c.fp) + '</div>' +
+      (meta ? '<div class="pi-m">' + esc(meta) + '</div>' : '') +
+      '</div></button>';
   }
 
   function renderMe() {
@@ -214,28 +301,43 @@
     $('p-correct').textContent = String(stats.totalCorrect);
     $('p-games').textContent = String(stats.games);
     $('p-streak').textContent = String(stats.bestStreak);
-    $('me-pack-n').textContent = album.length + ' / ' + PACK_MAX;
+    $('me-pack-n').textContent = album.length + ' · 精选 ' + favorites.length + '/' + FAV_MAX;
     $('me-dex-t').textContent = '图鉴 ' + stats.dex.length + ' / ' + BANK.length;
     $('me-trash-t').textContent = '垃圾桶 ' + trash.length;
-    if (!album.length) {
-      $('me-pack-preview').innerHTML = '<div class="pack-empty">卡包是空的。结算页点「加入卡包」，才会收进来。</div>';
+    var list = favorites.length ? favorites.map(cardByFp).filter(Boolean) : album.slice(0, 3);
+    list = list.slice(0, 3);
+    if (!list.length) {
+      $('me-pack-preview').innerHTML = '<div class="pack-empty">卡册是空的。打完一局会自动收进来。</div>';
     } else {
       var h = '';
-      var n = Math.min(3, album.length);
-      for (var i = 0; i < n; i++) h += cardRow(album[i], i, '<br>' + esc(album[i].date || ''));
+      for (var i = 0; i < list.length; i++) h += cardRow(list[i]);
       $('me-pack-preview').innerHTML = h;
     }
   }
+
   function renderPack() {
-    $('pack-count').textContent = album.length + ' / ' + PACK_MAX + ' · 点开一张可以丢进垃圾桶';
-    if (!album.length) {
-      $('pack-list').innerHTML = '<div class="pack-empty">卡包是空的。打完一局，在结算页点「加入卡包」。</div>';
+    $('pack-count').textContent = '全部 ' + album.length + ' 张 · 精选 ' + favorites.length + '/' + FAV_MAX;
+    $('pack-tab-all-n').textContent = String(album.length);
+    $('pack-tab-fav-n').textContent = String(favorites.length);
+    $('pack-tab-all').className = 'seg-b' + (packTab === 'all' ? ' on' : '');
+    $('pack-tab-fav').className = 'seg-b' + (packTab === 'fav' ? ' on' : '');
+    var list = packTab === 'fav' ? favorites.map(cardByFp).filter(Boolean) : album;
+    if (!list.length) {
+      $('pack-list').innerHTML = '<div class="pack-empty">' + (packTab === 'fav'
+        ? '精选还是空的。点开一张卡，选「设为精选」。'
+        : '卡册是空的。打完一局会自动收进来。') + '</div>';
+      $('pack-more').style.display = 'none';
       return;
     }
+    var shown = list.slice(0, packLimit);
     var h = '';
-    album.forEach(function (c, i) { h += cardRow(c, i, '<br>' + esc(c.date || '')); });
+    for (var i = 0; i < shown.length; i++) h += cardRow(shown[i]);
     $('pack-list').innerHTML = h;
+    var more = list.length > shown.length;
+    $('pack-more').style.display = more ? 'block' : 'none';
+    $('pack-more-t').textContent = more ? ('已显示 ' + shown.length + ' / ' + list.length) : '';
   }
+
   function renderDex() {
     $('dex-count').textContent = '已遇见 ' + stats.dex.length + ' / ' + BANK.length;
     var dex = '';
@@ -249,31 +351,26 @@
     });
     $('dex-list').innerHTML = dex;
   }
+
   function renderTrash() {
     $('trash-count').textContent = trash.length + ' / ' + TRASH_MAX;
     if (!trash.length) {
-      $('trash-list').innerHTML = '<div class="pack-empty">垃圾桶是空的。从卡包丢出来的卡会在这里，可以找回。</div>';
+      $('trash-list').innerHTML = '<div class="pack-empty">垃圾桶是空的。从卡册删掉的卡会在这里，可以找回。</div>';
       return;
     }
     var h = '';
-    trash.forEach(function (c, i) {
+    for (var i = 0; i < trash.length; i++) {
+      var c = trash[i];
       var name = c.name || F.chineseName(c.fp);
-      h += '<div class="box trash-item" data-i="' + i + '"><div class="trash-main"><div class="av">' + FIG.render(c.fp) + '</div>' +
+      h += '<div class="box trash-item" data-fp="' + esc(c.fp) + '"><div class="trash-main"><div class="av">' + FIG.render(c.fp) + '</div>' +
         '<div class="pi-main"><div class="pi-t">' + esc(name) + '</div><div class="pi-s">' + esc(c.fp) + '</div></div></div>' +
         '<div class="trash-acts"><button class="box act act-lime" type="button" data-act="back">找回</button>' +
         '<button class="box act" type="button" data-act="drop">彻底删除</button></div></div>';
-    });
+    }
     $('trash-list').innerHTML = h;
   }
 
-  var G = null;
-  var raf = 0;
-  var current = null;
-  var detailCard = null;
-  var pending = null;
-  var replaceIndex = -1;
-  var dropIndex = -1;
-
+  /* ---------- 答题 ---------- */
   function startGame() {
     closeSheets();
     var idxs = shuffle(BANK.map(function (q) { return q.idx; })).slice(0, ROUND);
@@ -281,7 +378,7 @@
       picks: idxs, i: 0, rounds: [], streak: 0, maxStreak: 0,
       start: 0, hiddenAt: 0, answered: false, order: []
     };
-    show('v-quiz');
+    show('v-quiz', { replace: true });
     renderQuestion();
   }
 
@@ -372,6 +469,7 @@
     renderQuestion();
   }
 
+  /* ---------- 结算 ---------- */
   function listHTML(card) {
     var detail = F.score(card.rounds, BANK).detail;
     var h = '';
@@ -380,10 +478,10 @@
       if (!q) return;
       var d = detail[k];
       var m = r.correct ? ('+' + (d.pts + d.bonus)) : '没认出';
-      h += '<li><em>' + esc(q.options[q.correctIndex]) + '</em><span class="m">' + m + '</span></li>';
+      h += '<li data-idx="' + r.idx + '"><em>' + esc(q.options[q.correctIndex]) + '</em><span class="m">' + m + '</span><i class="chev">›</i></li>';
     });
     var all = F.score(card.rounds, BANK).allBonus;
-    if (all) h += '<li><em>全对</em><span class="m">+' + all + '</span></li>';
+    if (all) h += '<li class="all"><em>全对</em><span class="m">+' + all + '</span></li>';
     return h;
   }
   function paintGacha(figId, nameId, codeId, card) {
@@ -405,10 +503,7 @@
     $('r-time').textContent = card.time + ' 秒';
     $('r-list').innerHTML = listHTML(card);
     $('r-list').className = 'r-list is-collapsed';
-    $('r-toggle-t').textContent = '展开词表';
-    var joined = inAlbum(card);
-    $('r-add-t').textContent = joined ? '已在卡包' : '加入卡包';
-    $('r-add').className = 'box btn-main' + (joined ? ' is-off' : '');
+    $('r-toggle-t').textContent = '展开';
   }
 
   async function finish() {
@@ -441,84 +536,50 @@
       if (r.correct && stats.dex.indexOf(r.idx) < 0) stats.dex.push(r.idx);
     });
     touchDay();
-    show('v-result');
+    var already = inAlbum(current);
+    if (!already) album.unshift(copyCard(current));
+    show('v-result', { replace: true });
     var ok = await saveData();
-    if (!ok) toast('局数没存上，这局卡片只在这次打开里有效');
-  }
-
-  function openFull(card, opt) {
-    pending = { card: copyCard(card), fromTrash: opt && typeof opt.fromTrash === 'number' ? opt.fromTrash : -1 };
-    replaceIndex = -1;
-    $('full-ask').textContent = '';
-    $('full-acts').className = 'grid2 sheet-acts';
-    var h = '';
-    album.forEach(function (c, i) { h += cardRow(c, i, ''); });
-    $('full-list').innerHTML = h;
-    setSheet('full', true);
-  }
-  async function commitAdd(card, replaced) {
-    if (replaced) {
-      var old = album[replaced.index];
-      album.splice(replaced.index, 1);
-      if (replaced.fromTrash >= 0) trash.splice(replaced.fromTrash, 1);
-      album.unshift(copyCard(card));
-      var evicted = pushTrash(old);
-      var ok = await saveData();
-      if (!ok) { toast('没存上'); return; }
-      toast(evicted ? '已换上。垃圾桶满了，最早一张被清掉' : '已换上，旧的在垃圾桶');
-    } else {
-      if (pending && pending.fromTrash >= 0) trash.splice(pending.fromTrash, 1);
-      album.unshift(copyCard(card));
-      var ok2 = await saveData();
-      if (!ok2) { toast('没存上'); return; }
-      toast('已加入卡包');
-    }
-    setSheet('full', false);
-    pending = null;
-    replaceIndex = -1;
-    if (current && current.fp === card.fp) {
-      $('r-add-t').textContent = '已在卡包';
-      $('r-add').className = 'box btn-main is-off';
-    }
-    renderHome();
-    var here = stack[stack.length - 1];
-    if (here === 'v-trash') renderTrash();
-    if (here === 'v-pack') renderPack();
-    if (here === 'v-me') renderMe();
-  }
-  async function addToAlbum(card, fromTrash) {
-    if (!card) return;
-    if (inAlbum(card)) {
-      toast('这张已经在卡包里');
-      if (current && current.fp === card.fp) {
-        $('r-add-t').textContent = '已在卡包';
-        $('r-add').className = 'box btn-main is-off';
+    if (!ok) {
+      if (!already) {
+        var i = findIdx(album, current.fp);
+        if (i >= 0) album.splice(i, 1);
       }
+      toast('这局没存上');
       return;
     }
-    if (album.length >= PACK_MAX) {
-      openFull(card, { fromTrash: fromTrash });
-      return;
-    }
-    pending = { card: copyCard(card), fromTrash: typeof fromTrash === 'number' ? fromTrash : -1 };
-    await commitAdd(card, null);
-    pending = null;
+    toast(already ? '这张已经在卡册' : '已收入卡册');
   }
 
-  var detailFrom = 'album';
-  function openDetail(i, from) {
-    var list = from === 'album' ? album : album;
-    var c = list[i];
+  /* ---------- 卡册 / 词条 / 删除 ---------- */
+  function setDetailFav() {
+    var on = detailCard && inFav(detailCard.fp);
+    $('d-fav').textContent = on ? '取消精选' : '设为精选';
+    $('d-fav').className = 'box act fav-btn' + (on ? ' act-lime' : '');
+  }
+  function openDetail(fp) {
+    var c = cardByFp(fp);
     if (!c) return;
     detailCard = c;
-    detailCard._i = i;
-    detailFrom = 'album';
     paintGacha('d-fig', 'd-name', 'd-code', c);
     $('d-title').textContent = (c.title || '') + '　' + (c.score || 0) + ' 分';
     $('d-sub').textContent = (c.date || '') + '　答对 ' + c.correct + '/5　用时 ' + c.time + ' 秒';
     $('d-list').innerHTML = c.rounds ? listHTML(c) : '';
+    setDetailFav();
     $('d-trash').style.display = '';
     setSheet('sheet', true);
+  }
+
+  function openWord(i, force) {
+    var q = BANK[i];
+    if (!q) return;
+    if (!force && stats.dex.indexOf(q.idx) < 0) return;
+    $('w-cat').textContent = q.cat;
+    $('w-fig').innerHTML = figMarkup(q);
+    $('w-name').textContent = q.options[q.correctIndex];
+    $('w-q').innerHTML = promptHTML(q.zhPrompt);
+    $('w-fact').textContent = q.fact;
+    setSheet('word', true);
   }
 
   var busy = false;
@@ -530,7 +591,7 @@
       var url = kind === 'card' ? await R.drawCard(card) : await R.drawFigure(card);
       var res = await P.saveImage(url);
       if (res.ok) {
-        toast(kind === 'card' ? '卡已存到相册' : '形象已存到相册');
+        toast(kind === 'card' ? '卡片已存到相册' : '小人已存到相册');
         P.vibrate('medium');
       } else if (res.reason === 'noxhs') {
         $('pv-tip').textContent = '请在小红书里打开，才能一键存到相册。浏览器里可以长按图片另存。';
@@ -546,17 +607,79 @@
     } finally { busy = false; }
   }
 
-  function openWord(i) {
-    var q = BANK[i];
-    if (!q || stats.dex.indexOf(q.idx) < 0) return;
-    $('w-cat').textContent = q.cat;
-    $('w-fig').innerHTML = figMarkup(q);
-    $('w-name').textContent = q.options[q.correctIndex];
-    $('w-q').innerHTML = promptHTML(q.zhPrompt);
-    $('w-fact').textContent = q.fact;
-    setSheet('word', true);
+  function openDrop(fp) {
+    var i = findIdx(trash, fp);
+    if (i < 0) return;
+    dropFp = fp;
+    var name = trash[i].name || F.chineseName(trash[i].fp);
+    $('drop-text').textContent = '彻底删除「' + name + '」？删掉就找不回来了。';
+    $('drop-yes').textContent = '删除';
+    setSheet('drop', true);
+  }
+  function openClear() {
+    dropFp = '__all__';
+    $('drop-text').textContent = '清除这台手机上的局数、图鉴、卡册和垃圾桶？';
+    $('drop-yes').textContent = '清除';
+    setSheet('drop', true);
+  }
+  function closeDrop() {
+    dropFp = '';
+    $('drop-yes').textContent = '删除';
+    setSheet('drop', false);
   }
 
+  async function restoreCard(fp) {
+    if (albumBusy) return;
+    var i = findIdx(trash, fp);
+    if (i < 0) return;
+    albumBusy = true;
+    var card = trash[i];
+    if (inAlbum(card)) {
+      trash.splice(i, 1);
+      await saveData();
+      renderTrash();
+      renderMe();
+      renderHome();
+      albumBusy = false;
+      toast('这张已经在卡册');
+      return;
+    }
+    trash.splice(i, 1);
+    album.unshift(copyCard(card));
+    var ok = await saveData();
+    albumBusy = false;
+    if (!ok) {
+      toast('没存上');
+      return;
+    }
+    renderTrash();
+    renderMe();
+    renderPack();
+    renderHome();
+    toast('已找回');
+  }
+
+  async function deleteDetailCard() {
+    if (!detailCard || albumBusy) return;
+    var fp = detailCard.fp;
+    var card = removeCard(fp);
+    if (!card) return;
+    albumBusy = true;
+    var evicted = pushTrash(card);
+    setSheet('sheet', false);
+    var ok = await saveData();
+    albumBusy = false;
+    if (!ok) {
+      toast('没存上');
+      return;
+    }
+    toast(evicted ? '已丢进垃圾桶。垃圾桶满了，最早一张被清掉' : '已丢进垃圾桶');
+    renderPack();
+    renderMe();
+    renderHome();
+  }
+
+  /* ---------- 绑定 ---------- */
   function bindMask(id) {
     $(id).addEventListener('click', function (e) {
       if (e.target !== this) return;
@@ -574,11 +697,11 @@
   function bind() {
     $('btn-start').addEventListener('click', startGame);
     $('btn-pack').addEventListener('click', function () { show('v-pack'); });
-    $('tab-home').addEventListener('click', function () { closeSheets(); show('v-home'); });
-    $('tab-me').addEventListener('click', function () { closeSheets(); show('v-me'); });
-    $('pack-back').addEventListener('click', function () { show('v-me'); });
-    $('dex-back').addEventListener('click', function () { show('v-me'); });
-    $('trash-back').addEventListener('click', function () { show('v-me'); });
+    $('tab-home').addEventListener('click', function () { closeSheets(); show('v-home', { root: true }); });
+    $('tab-me').addEventListener('click', function () { closeSheets(); show('v-me', { root: true }); });
+    $('pack-back').addEventListener('click', back);
+    $('dex-back').addEventListener('click', back);
+    $('trash-back').addEventListener('click', back);
     $('me-pack-more').addEventListener('click', function () { show('v-pack'); });
     $('me-dex').addEventListener('click', function () { show('v-dex'); });
     $('me-trash').addEventListener('click', function () { show('v-trash'); });
@@ -586,8 +709,12 @@
       closeSheets();
       G = null;
       cancelAnimationFrame(raf);
-      show('v-home');
+      show('v-home', { root: true });
     });
+
+    $('pack-tab-all').addEventListener('click', function () { packTab = 'all'; packLimit = PACK_PAGE; renderPack(); });
+    $('pack-tab-fav').addEventListener('click', function () { packTab = 'fav'; packLimit = PACK_PAGE; renderPack(); });
+    $('pack-more').addEventListener('click', function () { packLimit += PACK_PAGE; renderPack(); });
 
     $('q-opts').addEventListener('click', function (e) {
       var el = findAttr(e.target, this, 'data-oi');
@@ -600,21 +727,31 @@
     $('r-toggle').addEventListener('click', function () {
       var open = $('r-list').className.indexOf('is-collapsed') >= 0;
       $('r-list').className = open ? 'r-list' : 'r-list is-collapsed';
-      $('r-toggle-t').textContent = open ? '收起' : '展开词表';
+      $('r-toggle-t').textContent = open ? '收起' : '展开';
     });
-    $('r-add').addEventListener('click', function () { addToAlbum(current, -1); });
-    $('r-save-av').addEventListener('click', function () { saveImg('avatar', current); });
     $('r-again').addEventListener('click', startGame);
-    $('r-home').addEventListener('click', function () { closeSheets(); show('v-home'); });
-    $('r-me').addEventListener('click', function () { show('v-me'); });
+    $('r-save-card').addEventListener('click', function () { saveImg('card', current); });
+    $('r-save-av').addEventListener('click', function () { saveImg('avatar', current); });
+    $('r-home').addEventListener('click', function () { closeSheets(); show('v-home', { root: true }); });
+    $('r-me').addEventListener('click', function () { show('v-pack'); });
 
-    function onPackClick(e, root) {
-      var el = findAttr(e.target, root, 'data-i');
-      if (!el) return;
-      openDetail(+el.getAttribute('data-i'));
-    }
-    $('pack-list').addEventListener('click', function (e) { onPackClick(e, this); });
-    $('me-pack-preview').addEventListener('click', function (e) { onPackClick(e, this); });
+    $('r-list').addEventListener('click', function (e) {
+      var el = findAttr(e.target, this, 'data-idx');
+      if (el) openWord(+el.getAttribute('data-idx'), true);
+    });
+    $('d-list').addEventListener('click', function (e) {
+      var el = findAttr(e.target, this, 'data-idx');
+      if (el) openWord(+el.getAttribute('data-idx'), true);
+    });
+
+    $('pack-list').addEventListener('click', function (e) {
+      var el = findAttr(e.target, this, 'data-fp');
+      if (el) openDetail(el.getAttribute('data-fp'));
+    });
+    $('me-pack-preview').addEventListener('click', function (e) {
+      var el = findAttr(e.target, this, 'data-fp');
+      if (el) openDetail(el.getAttribute('data-fp'));
+    });
     $('dex-list').addEventListener('click', function (e) {
       var el = findAttr(e.target, this, 'data-i');
       if (el) openWord(+el.getAttribute('data-i'));
@@ -623,91 +760,28 @@
       var act = findAttr(e.target, this, 'data-act');
       if (!act) return;
       var item = act;
-      while (item && item !== this && !item.getAttribute('data-i')) item = item.parentNode;
+      while (item && item !== this && !item.getAttribute('data-fp')) item = item.parentNode;
       if (!item || item === this) return;
-      var i = +item.getAttribute('data-i');
-      if (act.getAttribute('data-act') === 'back') addToAlbum(trash[i], i);
-      else {
-        dropIndex = i;
-        var name = trash[i] && (trash[i].name || '');
-        $('drop-text').textContent = '彻底删除「' + name + '」？删掉就找不回来了。';
-        setSheet('drop', true);
-      }
+      var fp = item.getAttribute('data-fp');
+      if (act.getAttribute('data-act') === 'back') restoreCard(fp);
+      else openDrop(fp);
     });
 
     $('d-close').addEventListener('click', function () { setSheet('sheet', false); });
     $('d-save-card').addEventListener('click', function () { saveImg('card', detailCard); });
     $('d-save-av').addEventListener('click', function () { saveImg('avatar', detailCard); });
-    $('d-trash').addEventListener('click', async function () {
+    $('d-fav').addEventListener('click', async function () {
       if (!detailCard) return;
-      var i = detailCard._i;
-      var card = album[i];
-      if (!card) return;
-      album.splice(i, 1);
-      var evicted = pushTrash(card);
-      setSheet('sheet', false);
-      var ok = await saveData();
-      if (!ok) toast('没存上');
-      else toast(evicted ? '已丢进垃圾桶。垃圾桶满了，最早一张被清掉' : '已丢进垃圾桶');
-      if (current && current.fp === card.fp) {
-        $('r-add-t').textContent = '加入卡包';
-        $('r-add').className = 'box btn-main';
-      }
+      var r = toggleFav(detailCard.fp);
+      if (r === 'full') { toast('精选已满 8 张，先去卡册取消一张'); return; }
+      setDetailFav();
       renderPack();
       renderMe();
       renderHome();
+      var ok = await saveData();
+      toast(!ok ? '没存上' : (r === 'added' ? '已设为精选' : '已取消精选'));
     });
-
-    $('full-x').addEventListener('click', function () { setSheet('full', false); });
-    $('full-goto').addEventListener('click', function () {
-      setSheet('full', false);
-      show('v-pack');
-    });
-    $('full-list').addEventListener('click', function (e) {
-      var el = findAttr(e.target, this, 'data-i');
-      if (!el || !pending) return;
-      replaceIndex = +el.getAttribute('data-i');
-      var old = album[replaceIndex];
-      $('full-ask').textContent = '用「' + pending.card.name + '」换掉「' + (old.name || '') + '」？换下的进垃圾桶。';
-      $('full-acts').className = 'grid2 sheet-acts on';
-    });
-    $('full-no').addEventListener('click', function () {
-      replaceIndex = -1;
-      $('full-ask').textContent = '';
-      $('full-acts').className = 'grid2 sheet-acts';
-    });
-    $('full-yes').addEventListener('click', function () {
-      if (!pending || replaceIndex < 0) return;
-      commitAdd(pending.card, { index: replaceIndex, fromTrash: pending.fromTrash });
-    });
-
-    function closeDrop() {
-      setSheet('drop', false);
-      dropIndex = -1;
-      $('drop-yes').textContent = '删除';
-    }
-    $('drop-x').addEventListener('click', closeDrop);
-    $('drop-no').addEventListener('click', closeDrop);
-    $('drop-yes').addEventListener('click', async function () {
-      if (dropIndex === -2) {
-        album = [];
-        trash = [];
-        stats = emptyStats();
-        current = null;
-        closeDrop();
-        var cleared = await saveData();
-        renderHome();
-        renderMe();
-        toast(cleared ? '已清除本机记录' : '清除没存上');
-        return;
-      }
-      if (dropIndex < 0) return;
-      trash.splice(dropIndex, 1);
-      closeDrop();
-      await saveData();
-      renderTrash();
-      toast('已彻底删除');
-    });
+    $('d-trash').addEventListener('click', deleteDetailCard);
 
     $('w-close').addEventListener('click', function () { setSheet('word', false); });
     $('pv-close').addEventListener('click', function () {
@@ -720,12 +794,35 @@
       } else bindMask(id);
     });
 
-    $('p-clear').addEventListener('click', function () {
-      dropIndex = -2;
-      $('drop-text').textContent = '清除这台手机上的局数、图鉴、卡包和垃圾桶？';
-      $('drop-yes').textContent = '清除';
-      setSheet('drop', true);
+    $('drop-x').addEventListener('click', closeDrop);
+    $('drop-no').addEventListener('click', closeDrop);
+    $('drop-yes').addEventListener('click', async function () {
+      if (dropFp === '__all__') {
+        album = [];
+        trash = [];
+        favorites = [];
+        stats = emptyStats();
+        current = null;
+        closeDrop();
+        var cleared = await saveData();
+        renderHome();
+        renderMe();
+        renderPack();
+        toast(cleared ? '已清除本机记录' : '清除没存上');
+        return;
+      }
+      if (!dropFp) return;
+      var i = findIdx(trash, dropFp);
+      if (i < 0) { closeDrop(); return; }
+      trash.splice(i, 1);
+      closeDrop();
+      await saveData();
+      renderTrash();
+      renderMe();
+      toast('已彻底删除');
     });
+
+    $('p-clear').addEventListener('click', openClear);
   }
 
   window.YKBD_APP = {
@@ -733,9 +830,10 @@
     bank: BANK,
     album: function () { return album; },
     trash: function () { return trash; },
+    favorites: function () { return favorites; },
     stats: function () { return stats; }
   };
 
   bind();
-  loadData().then(function () { show('v-home'); }, function () { show('v-home'); });
+  loadData().then(function () { show('v-home', { root: true }); }, function () { show('v-home', { root: true }); });
 })();

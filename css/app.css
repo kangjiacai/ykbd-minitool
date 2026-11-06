@@ -278,6 +278,7 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 .mini-n { display: block; margin-top: 4px; font-weight: 700; }
 .mini-n b { font-size: 30px; font-weight: 700; }
 .mini-n em { font-style: normal; font-size: 14px; color: #444; margin-left: 2px; }
+.mini-sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; }
 .mini-title { display: block; margin-top: 6px; font-size: 22px; font-weight: 700; line-height: 1.2; }
 .mini-lav { background: #C4B5FD; }
 .mini .pill { margin-top: 8px; min-height: 0; padding: 4px 10px; }
@@ -485,7 +486,7 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 .detail-meta span { display: block; font-size: 12px; font-weight: 700; }
 .detail-meta b { display: block; margin-top: 2px; font-size: 16px; }
 .d-sub { margin-top: 6px; font-size: 13px; line-height: 1.5; font-weight: 700; }
-.r-list { list-style: none; margin-top: 6px; max-height: 160px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.r-list { list-style: none; margin-top: 6px; }
 .r-list.is-collapsed { display: none; }
 .r-list li {
   display: -webkit-flex;
@@ -496,8 +497,12 @@ button.pill { min-height: 44px; padding: 8px 14px; }
   border-top: 2px solid #111;
   font-size: 14px;
 }
+.r-list li[data-idx] { cursor: pointer; }
+.r-list li[data-idx]:active { background: #f4f6f8; }
 .r-list em { font-style: normal; font-weight: 700; }
 .r-list .m { font-size: 12px; font-weight: 700; color: #333; margin-left: 8px; white-space: nowrap; }
+.r-list .chev { font-style: normal; font-weight: 700; margin-left: 6px; color: #444; }
+.r-list li.all { border-top: 2px solid #111; }
 
 .page-h { margin-top: 4px; font-size: 28px; font-weight: 700; line-height: 1.1; }
 .page-sub { margin-top: 4px; font-size: 13px; font-weight: 700; }
@@ -523,6 +528,13 @@ button.pill { min-height: 44px; padding: 8px 14px; }
   font-weight: 700;
   font-size: 16px;
 }
+.seg { display: -webkit-flex; display: flex; margin-top: 12px; }
+.seg-b { -webkit-flex: 1; flex: 1; min-height: 46px; text-align: center; font-weight: 700; font-size: 15px; background: #fff; border: 2.5px solid #111; border-radius: 12px; box-shadow: 3px 3px 0 #111; margin-right: 8px; transition: transform 160ms var(--ease-out), background-color 150ms ease; }
+.seg-b:last-child { margin-right: 0; }
+.seg-b.on { background: #C8F031; }
+.seg-b:active { -webkit-transform: translate(2px, 2px) scale(0.97); transform: translate(2px, 2px) scale(0.97); box-shadow: 1px 1px 0 #111; }
+.seg-b b { font-size: 12px; }
+.fav-btn { width: 100%; margin-top: 8px; }
 .pack-list { margin-top: 8px; }
 .pack-empty {
   border: 2.5px dashed #111;
@@ -555,6 +567,8 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 .pi-main { -webkit-flex: 1; flex: 1; min-width: 0; }
 .pi-t { font-weight: 700; font-size: 16px; }
 .pi-s { margin-top: 2px; font-size: 11px; font-weight: 700; word-break: break-all; }
+.pi-m { margin-top: 3px; font-size: 11px; font-weight: 700; color: #333; }
+.pi-fav { margin-left: 4px; font-size: 12px; }
 .trash-item { padding: 10px; margin-bottom: 10px; }
 .trash-main { display: -webkit-flex; display: flex; align-items: center; }
 .trash-acts { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; grid-gap: 8px; }
@@ -620,6 +634,9 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 .sheet-panel {
   position: absolute;
   left: 0; right: 0; bottom: 0;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
   -webkit-transform: translateY(100%);
   transform: translateY(100%);
   -webkit-transition: -webkit-transform 280ms var(--ease-drawer);
@@ -653,9 +670,6 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 .q-modal-in { margin-top: 52px; }
 .q-modal-word { margin-top: 12px; font-size: 22px; font-weight: 700; }
 .q-modal-fact { margin-top: 8px; font-size: 14px; line-height: 1.55; }
-.full-ask { margin-top: 10px; font-size: 14px; font-weight: 700; line-height: 1.5; min-height: 0; }
-#full-acts { display: none; }
-#full-acts.on { display: grid; }
 .w-fig { margin-top: 12px; height: 160px; position: relative; overflow: hidden; }
 .w-fig svg { width: 100%; height: 100%; display: block; }
 .w-name { margin-top: 12px; font-size: 28px; font-weight: 700; }
@@ -666,9 +680,9 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 
 .toast {
   position: fixed;
-  left: 16px;
-  top: 64px;
-  top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 52px);
+  left: 50%;
+  top: 96px;
+  top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 96px);
   background: #111;
   color: #fff;
   font-size: 13px;
@@ -677,17 +691,17 @@ button.pill { min-height: 44px; padding: 8px 14px; }
   border-radius: 12px;
   z-index: 40;
   display: block;
-  max-width: 220px;
+  max-width: 260px;
   text-align: left;
   line-height: 1.45;
   opacity: 0;
   pointer-events: none;
-  -webkit-transform: translateY(100%);
-  transform: translateY(100%);
+  -webkit-transform: translate(-50%, 100%);
+  transform: translate(-50%, 100%);
   -webkit-transition: opacity 200ms var(--ease-out), -webkit-transform 200ms var(--ease-out);
   transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
 }
-.toast.on { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+.toast.on { opacity: 1; -webkit-transform: translate(-50%, 0); transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) {
   .btn-main, .act, .opt, .row-link, .text-back, .pack-item, .dex-item, .tab {
     -webkit-transition: background-color 150ms ease;
@@ -709,8 +723,8 @@ button.pill { min-height: 44px; padding: 8px 14px; }
   .gacha-fit.enter { -webkit-animation: fade-in 200ms var(--ease-out); animation: fade-in 200ms var(--ease-out); }
   .view.enter-soft.on { -webkit-animation: fade-in 200ms var(--ease-out); animation: fade-in 200ms var(--ease-out); }
   .toast {
-    -webkit-transform: none;
-    transform: none;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
     -webkit-transition: opacity 200ms var(--ease-out);
     transition: opacity 200ms var(--ease-out);
   }
@@ -732,7 +746,11 @@ button.pill { min-height: 44px; padding: 8px 14px; }
 @media (max-height: 700px) {
   .hero-t { font-size: 28px; }
   .hero-fig svg { width: 160px; height: 106px; }
-  .board { height: 150px; }
+  .board { height: 132px; }
   .gacha-fit { height: 220px; }
-  .q-t { font-size: 18px; }
+  .q-t { font-size: 17px; line-height: 1.3; }
+  .opt { min-height: 46px; margin-top: 8px; padding: 6px 12px; }
+  .opt b { font-size: 16px; }
+  .q-progress { margin-bottom: 4px; }
+  .text-back { min-height: 40px; padding: 4px 4px; margin-bottom: 0; }
 }

@@ -131,11 +131,19 @@
       ctx.save();
       ctx.translate(690, 1120);
       ctx.rotate(3 * Math.PI / 180);
-      ctx.font = '700 32px ' + FONT;
+      /* 12 位码是 14 个字符；题库扩到 200 后变 14 位码（17 个字符），自动缩字号避免出界 */
+      var codeSize = 32;
+      ctx.font = '700 ' + codeSize + 'px ' + FONT;
+      if (card.fp.length > 14) {
+        while (codeSize > 24 && ctx.measureText(card.fp).width + 48 > 300) {
+          codeSize -= 2;
+          ctx.font = '700 ' + codeSize + 'px ' + FONT;
+        }
+      }
       var tw = Math.max(280, ctx.measureText(card.fp).width + 48);
       hardShadow(ctx, 0, 0, tw, 78, 18, 8, 8);
       fillStroke(ctx, 0, 0, tw, 78, 18, '#C4B5FD', 6);
-      text(ctx, card.fp, 24, 52, 32, '700', '#111', 'left');
+      text(ctx, card.fp, 24, 52, codeSize, '700', '#111', 'left');
       ctx.restore();
 
       var url = o.cv.toDataURL('image/png');

@@ -38,8 +38,9 @@
     </div>
     <button class="box btn-main" id="btn-start" type="button"><span>开始一局</span><i class="arrow">→</i></button>
     <button class="box mini mini-wide" id="btn-pack" type="button">
-      <span class="mini-k">卡包</span>
-      <span class="mini-n"><b id="home-pack-n">0</b><em id="home-pack-max">/8</em></span>
+      <span class="mini-k">卡册</span>
+      <span class="mini-n"><b id="home-pack-n">0</b><em id="home-pack-max"> 张</em></span>
+      <span class="mini-sub" id="home-fav-n">精选 0/8</span>
       <span class="mini-figs" id="home-figs"></span>
     </button>
   </section>
@@ -73,7 +74,7 @@
       </div>
       <div class="box detail">
         <button class="detail-toggle" id="r-toggle" type="button">
-          <span>本局详情</span><b id="r-toggle-t">展开词表</b>
+          <span>本局详情</span><b id="r-toggle-t">展开</b>
         </button>
         <div class="detail-head">
           <h2 id="r-title">路人观察员</h2>
@@ -87,12 +88,12 @@
       </div>
     </div>
     <div class="dock">
-      <button class="box btn-main" id="r-add" type="button"><span id="r-add-t">加入卡包</span><i class="arrow">+</i></button>
+      <button class="box btn-main" id="r-again" type="button"><span>再来一局</span><i class="arrow">→</i></button>
       <div class="dock-grid">
-        <button class="box act" id="r-save-av" type="button">存形象</button>
-        <button class="box act act-lime" id="r-again" type="button">再来一局</button>
+        <button class="box act" id="r-save-av" type="button">存小人</button>
+        <button class="box act act-lime" id="r-save-card" type="button">存卡片</button>
         <button class="box act" id="r-home" type="button">回首页</button>
-        <button class="box act" id="r-me" type="button">我的</button>
+        <button class="box act" id="r-me" type="button">查看卡册</button>
       </div>
     </div>
   </section>
@@ -113,19 +114,24 @@
       <div class="box stat"><b id="p-games">0</b><span>局数</span></div>
       <div class="box stat"><b id="p-streak">0</b><span>最长连对</span></div>
     </div>
-    <div class="sec-h"><span>卡包</span><span class="pill" id="me-pack-n">0 / 8</span></div>
+    <div class="sec-h"><span>卡册</span><span class="pill" id="me-pack-n">0 · 精选 0/8</span></div>
     <div id="me-pack-preview" class="pack-list"></div>
-    <button class="box row-link" id="me-pack-more" type="button"><span>查看卡包</span><b>→</b></button>
+    <button class="box row-link" id="me-pack-more" type="button"><span>查看卡册</span><b>→</b></button>
     <button class="box row-link" id="me-dex" type="button"><span id="me-dex-t">图鉴 0 / 64</span><b>→</b></button>
     <button class="box row-link" id="me-trash" type="button"><span id="me-trash-t">垃圾桶 0</span><b>→</b></button>
-    <p class="foot">记录只在这台手机。卡包最多 8 张，满了要自己腾位置。垃圾桶最多留 20 张。<button class="link" id="p-clear" type="button">清除</button></p>
+    <p class="foot">记录只在这台手机。卡册不限量，精选 8 张展示在首页。垃圾桶最多留 20 张。<button class="link" id="p-clear" type="button">清除</button></p>
   </section>
 
   <section id="v-pack" class="view">
-    <button class="box row-link nav-link" id="pack-back" type="button"><span>回我的</span></button>
-    <h1 class="page-h">卡包</h1>
-    <p class="page-sub" id="pack-count">0 / 8</p>
+    <button class="box row-link nav-link" id="pack-back" type="button"><span>返回</span></button>
+    <h1 class="page-h">卡册</h1>
+    <p class="page-sub" id="pack-count">全部 0 张 · 精选 0/8</p>
+    <div class="seg" id="pack-tabs">
+      <button class="seg-b on" id="pack-tab-all" type="button">全部 <b id="pack-tab-all-n">0</b></button>
+      <button class="seg-b" id="pack-tab-fav" type="button">精选 <b id="pack-tab-fav-n">0</b></button>
+    </div>
     <div id="pack-list" class="pack-list"></div>
+    <button class="box row-link" id="pack-more" type="button" style="display:none"><span>显示更多</span><b id="pack-more-t"></b></button>
   </section>
 
   <section id="v-dex" class="view">
@@ -180,27 +186,11 @@
       <ol class="r-list" id="d-list"></ol>
     </div>
     <div class="grid2 sheet-acts">
-      <button class="box act act-lime" id="d-save-card" type="button">存到相册</button>
-      <button class="box act" id="d-save-av" type="button">存形象</button>
+      <button class="box act act-lime" id="d-save-card" type="button">存卡片</button>
+      <button class="box act" id="d-save-av" type="button">存小人</button>
     </div>
+    <button class="box act fav-btn" id="d-fav" type="button">设为精选</button>
     <button class="link link-c" id="d-trash" type="button">丢进垃圾桶</button>
-  </div>
-</div>
-
-<div class="sheet" id="full" data-sheet="sheet">
-  <div class="box sheet-in">
-    <div class="sheet-top">
-      <span class="pill pill-lav">卡包已满</span>
-      <button class="pill" id="full-x" type="button">关闭</button>
-    </div>
-    <p class="sheet-p">8 张都在。去卡包把不留的丢进垃圾桶，或点下面一张，用新的换掉它。换下来的会进垃圾桶。</p>
-    <button class="box row-link" id="full-goto" type="button"><span>去卡包腾位置</span><b>→</b></button>
-    <div id="full-list" class="pack-list"></div>
-    <div class="full-ask" id="full-ask"></div>
-    <div class="grid2 sheet-acts" id="full-acts">
-      <button class="box act act-lime" id="full-yes" type="button">确认替换</button>
-      <button class="box act" id="full-no" type="button">先不换</button>
-    </div>
   </div>
 </div>
 
