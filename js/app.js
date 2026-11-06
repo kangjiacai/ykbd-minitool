@@ -117,6 +117,11 @@
       G.hiddenAt = 0;
       tick();
     }
+    var tabOn = id === 'v-home' || id === 'v-me';
+    $('tabbar').className = tabOn ? 'tabbar on' : 'tabbar';
+    $('tab-home').className = 'tab' + (id === 'v-home' ? ' on' : '');
+    $('tab-me').className = 'tab' + (id === 'v-me' ? ' on' : '');
+    if (tabOn && cur) cur.className += ' has-tab';
     if (id === 'v-home') renderHome();
     if (id === 'v-me') renderMe();
     if (id === 'v-pack') renderPack();
@@ -184,12 +189,9 @@
   }
 
   function renderHome() {
-    var info = F.levelInfo(stats.totalCorrect);
     $('home-day').textContent = stats.days > 0 ? ('连续 ' + stats.days + ' 天') : '还没开局';
     $('home-pack-n').textContent = String(album.length);
     $('home-pack-max').textContent = '/' + PACK_MAX;
-    $('home-level').textContent = info.name;
-    $('home-lv').textContent = 'Lv.' + info.lv;
     var figs = '';
     var n = Math.min(2, album.length);
     for (var i = 0; i < n; i++) figs += FIG.render(album[i].fp);
@@ -565,8 +567,8 @@
   function bind() {
     $('btn-start').addEventListener('click', startGame);
     $('btn-pack').addEventListener('click', function () { show('v-pack'); });
-    $('btn-me').addEventListener('click', function () { show('v-me'); });
-    $('me-back').addEventListener('click', function () { closeSheets(); show('v-home'); });
+    $('tab-home').addEventListener('click', function () { closeSheets(); show('v-home'); });
+    $('tab-me').addEventListener('click', function () { closeSheets(); show('v-me'); });
     $('pack-back').addEventListener('click', function () { show('v-me'); });
     $('dex-back').addEventListener('click', function () { show('v-me'); });
     $('trash-back').addEventListener('click', function () { show('v-me'); });

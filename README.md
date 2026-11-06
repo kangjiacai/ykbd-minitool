@@ -1,4 +1,4 @@
-# 你可能不知道 · 小工具 v1.2
+# 你可能不知道 · 小工具 v1.3
 
 离线好奇心闯关。每局从内置题库无放回抽 5 题，四选一，限时 14 秒。结算抽一张卡：卡面只有指纹形象、四字中文名和指纹码。分数、答对、用时和称号在卡外的「本局详情」。
 
@@ -18,7 +18,7 @@ python3 -m http.server 8765
 
 ## 上传包
 
-`dist/你可能不知道-v1.2.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。
+`dist/你可能不知道-v1.3.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。
 
 重新打包（`scripts/` 不要打进 zip）：
 
@@ -32,12 +32,13 @@ cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.2.zip" . -x '*.DS_Store'
+cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.3.zip" . -x '*.DS_Store'
 ```
 
-## v1.2
+## v1.3
 
-- 官方返回会直接退出小工具，页内不靠它。首页和「我的」在内容区互切；卡包 / 图鉴 / 垃圾桶在内容区放「回我的」。这些按钮都在导航栏下方，不进顶栏左上或右上。
+- 首页和「我的」是一级页，用底部导航切换。卡包、图鉴、垃圾桶、答题、结算不显示底栏。
+- 二级页在内容区放「回我的」。答题内容区有「回首页」，结算底栏也有。官方返回仍会直接退出小工具。
 - 页面整体下沉：`padding-top` 为安全区再加 48px 导航带。
 - 答完从底部升起行动表。对错、正名、一句解释和「下一题 / 看结算」都在表里。点遮罩可收起，底栏仍留同一个按钮。
 - 结算仍不自动入卡包。满 8 张要自己腾位置或点名替换。垃圾桶可找回、可彻底删除。旧的 `ykbd_v1_pack` 会迁进 `ykbd_v1_album`。
