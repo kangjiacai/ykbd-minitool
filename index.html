@@ -11,11 +11,16 @@
 
   <section id="v-home" class="view on">
     <div class="top">
-      <span class="logo"><i></i>你可能不知道</span>
-      <span class="pill" id="home-day">还没开局</span>
+      <div class="top-left">
+        <span class="logo"><i></i>你可能不知道</span>
+      </div>
+      <div class="capsule-gap"></div>
     </div>
     <div class="box hero">
-      <span class="pill pill-lav tilt-l">今日 5 题</span>
+      <div class="hero-pills">
+        <span class="pill pill-lav tilt-l">今日 5 题</span>
+        <span class="pill" id="home-day">还没开局</span>
+      </div>
       <h1 class="hero-t">它就在你手边<br>但你不知道<br>它<span class="mark">叫什么</span></h1>
       <div class="hero-fig" aria-hidden="true">
         <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
@@ -50,62 +55,76 @@
     </div>
   </section>
 
-  <section id="v-quiz" class="view">
+  <section id="v-quiz" class="view fit" data-fit="1">
     <div class="top">
-      <span class="logo"><i></i>你可能不知道</span>
-      <span class="pill" id="q-count">1 / 5</span>
+      <div class="top-left top-row">
+        <span class="logo"><i></i>你可能不知道</span>
+        <span class="count" id="q-count">1 / 5</span>
+      </div>
+      <div class="capsule-gap"></div>
     </div>
-    <div class="bar"><i id="q-prog"></i></div>
-    <div class="box board">
-      <div class="figwrap" id="q-fig"></div>
-      <span class="pill pill-lav tilt-r sticker" id="q-vibe">冷门</span>
-      <span class="pill timer-pill" id="q-sec">剩 14 秒</span>
+    <div class="stage">
+      <div class="bar"><i id="q-prog"></i></div>
+      <div class="box board">
+        <div class="figwrap" id="q-fig"></div>
+        <span class="pill pill-lav tilt-r sticker" id="q-vibe">冷门</span>
+        <span class="pill timer-pill" id="q-sec">剩 14 秒</span>
+      </div>
+      <h1 class="q-t" id="q-text"></h1>
+      <div class="opts" id="q-opts"></div>
     </div>
-    <h1 class="q-t" id="q-text"></h1>
-    <div class="opts" id="q-opts"></div>
-    <div class="box fact" id="q-fact">
-      <span class="pill pill-lime" id="q-pts">+0</span>
-      <p id="q-fact-t"></p>
+    <div class="dock">
+      <button class="box btn-main is-off" id="q-next" type="button"><span id="q-next-t">先选一个</span><i class="arrow">→</i></button>
     </div>
-    <button class="box btn-main btn-next" id="q-next" type="button"><span id="q-next-t">下一题</span><i class="arrow">→</i></button>
   </section>
 
-  <section id="v-result" class="view">
+  <section id="v-result" class="view fit" data-fit="1">
     <div class="top">
-      <span class="logo"><i></i>你可能不知道</span>
-      <span class="pill" id="r-saved">已入卡包</span>
-    </div>
-    <div class="gacha" id="r-card">
-      <span class="pill tilt-l gacha-tag">你可能不知道</span>
-      <div class="gacha-dot"></div>
-      <div class="gacha-sticker" id="r-fig"></div>
-      <div class="gacha-name" id="r-name"></div>
-      <div class="gacha-code" id="r-code"></div>
-    </div>
-    <div class="box detail">
-      <div class="detail-k">本局详情</div>
-      <div class="detail-head">
-        <h2 id="r-title">路人观察员</h2>
-        <div class="detail-score"><b id="r-score">0</b><span>分</span></div>
+      <div class="top-left">
+        <span class="logo"><i></i>你可能不知道</span>
       </div>
-      <div class="detail-meta">
-        <div><span>答对</span><b id="r-correct">0/5</b></div>
-        <div><span>用时</span><b id="r-time">0 秒</b></div>
-      </div>
-      <ol class="r-list" id="r-list"></ol>
+      <div class="capsule-gap"></div>
     </div>
-    <button class="box btn-main" id="r-save-card" type="button"><span>存到相册</span><i class="arrow">↓</i></button>
-    <div class="grid3 acts">
-      <button class="box act" id="r-save-av" type="button">只存形象</button>
-      <button class="box act act-lime" id="r-again" type="button">再来一局</button>
-      <button class="box act" id="r-home" type="button">回首页</button>
+    <div class="stage">
+      <div class="gacha gacha-fit" id="r-card">
+        <span class="pill tilt-l gacha-tag">你可能不知道</span>
+        <div class="gacha-dot"></div>
+        <div class="gacha-sticker" id="r-fig"></div>
+        <div class="gacha-name" id="r-name"></div>
+        <div class="gacha-code" id="r-code"></div>
+      </div>
+      <div class="box detail">
+        <button class="detail-toggle" id="r-toggle" type="button">
+          <span>本局详情</span><b id="r-toggle-t">展开词表</b>
+        </button>
+        <div class="detail-head">
+          <h2 id="r-title">路人观察员</h2>
+          <div class="detail-score"><b id="r-score">0</b><span>分</span></div>
+        </div>
+        <div class="detail-meta">
+          <div><span>答对</span><b id="r-correct">0/5</b></div>
+          <div><span>用时</span><b id="r-time">0 秒</b></div>
+        </div>
+        <ol class="r-list is-collapsed" id="r-list"></ol>
+      </div>
+    </div>
+    <div class="dock">
+      <button class="box btn-main" id="r-add" type="button"><span id="r-add-t">加入卡包</span><i class="arrow">+</i></button>
+      <div class="dock-grid">
+        <button class="box act" id="r-save-av" type="button">存形象</button>
+        <button class="box act act-lime" id="r-again" type="button">再来一局</button>
+        <button class="box act" id="r-home" type="button">回首页</button>
+        <button class="box act" id="r-me" type="button">我的</button>
+      </div>
     </div>
   </section>
 
   <section id="v-me" class="view">
     <div class="top">
-      <button class="pill" id="me-home" type="button">← 首页</button>
-      <span class="pill">本机</span>
+      <div class="top-left">
+        <button class="back" id="me-back" type="button">← 首页</button>
+      </div>
+      <div class="capsule-gap"></div>
     </div>
     <div class="box lv-card">
       <span class="mini-k">当前等级</span>
@@ -121,20 +140,67 @@
       <div class="box stat"><b id="p-games">0</b><span>局数</span></div>
       <div class="box stat"><b id="p-streak">0</b><span>最长连对</span></div>
     </div>
-    <div class="sec-h" id="pack-anchor"><span>卡包</span><span class="pill" id="pack-count">0 / 8</span></div>
+    <div class="sec-h"><span>卡包</span><span class="pill" id="me-pack-n">0 / 8</span></div>
+    <div id="me-pack-preview" class="pack-list"></div>
+    <button class="box row-link" id="me-pack-more" type="button"><span>查看卡包</span><b>→</b></button>
+    <button class="box row-link" id="me-dex" type="button"><span id="me-dex-t">图鉴 0 / 64</span><b>→</b></button>
+    <button class="box row-link" id="me-trash" type="button"><span id="me-trash-t">垃圾桶 0</span><b>→</b></button>
+    <p class="foot">记录只在这台手机。卡包最多 8 张，满了要自己腾位置。垃圾桶最多留 20 张。<button class="link" id="p-clear" type="button">清除</button></p>
+  </section>
+
+  <section id="v-pack" class="view">
+    <div class="top">
+      <div class="top-left">
+        <button class="back" id="pack-back" type="button">← 返回</button>
+      </div>
+      <div class="capsule-gap"></div>
+    </div>
+    <h1 class="page-h">卡包</h1>
+    <p class="page-sub" id="pack-count">0 / 8</p>
     <div id="pack-list" class="pack-list"></div>
-    <div class="sec-h"><span>图鉴</span><span class="pill" id="p-dex">0 / 64</span></div>
+  </section>
+
+  <section id="v-dex" class="view">
+    <div class="top">
+      <div class="top-left">
+        <button class="back" id="dex-back" type="button">← 返回</button>
+      </div>
+      <div class="capsule-gap"></div>
+    </div>
+    <h1 class="page-h">图鉴</h1>
+    <p class="page-sub" id="dex-count">0 / 64</p>
     <div class="dex" id="dex-list"></div>
-    <button class="box btn-main" id="pack-start" type="button"><span>开始一局</span><i class="arrow">→</i></button>
-    <p class="foot">记录只存在这台手机 · 卡包最多 8 张，满了挤掉最早的。<button class="link" id="p-clear" type="button">清除</button></p>
+  </section>
+
+  <section id="v-trash" class="view">
+    <div class="top">
+      <div class="top-left">
+        <button class="back" id="trash-back" type="button">← 返回</button>
+      </div>
+      <div class="capsule-gap"></div>
+    </div>
+    <h1 class="page-h">垃圾桶</h1>
+    <p class="page-sub" id="trash-count">0 / 20</p>
+    <div id="trash-list" class="pack-list"></div>
   </section>
 
 </div>
 
-<div class="sheet" id="sheet">
+<div class="sheet sheet-quiz" id="q-modal" data-sheet="sheet sheet-quiz">
+  <div class="box sheet-in q-modal-in">
+    <div class="sheet-top">
+      <span class="pill pill-lime" id="q-pts">+0</span>
+      <button class="pill" id="q-modal-x" type="button">关闭</button>
+    </div>
+    <p class="q-modal-word" id="q-modal-word"></p>
+    <p class="q-modal-fact" id="q-fact-t"></p>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" data-sheet="sheet">
   <div class="box sheet-in">
     <div class="sheet-top">
-      <span class="pill pill-lav">卡包</span>
+      <span class="pill pill-lav">这张卡</span>
       <button class="pill" id="d-close" type="button">关闭</button>
     </div>
     <div class="gacha gacha-sm">
@@ -152,13 +218,44 @@
     </div>
     <div class="grid2 sheet-acts">
       <button class="box act act-lime" id="d-save-card" type="button">存到相册</button>
-      <button class="box act" id="d-save-av" type="button">只存形象</button>
+      <button class="box act" id="d-save-av" type="button">存形象</button>
     </div>
-    <button class="link link-c" id="d-del" type="button">移出卡包</button>
+    <button class="link link-c" id="d-trash" type="button">丢进垃圾桶</button>
   </div>
 </div>
 
-<div class="sheet" id="word">
+<div class="sheet" id="full" data-sheet="sheet">
+  <div class="box sheet-in">
+    <div class="sheet-top">
+      <span class="pill pill-lav">卡包已满</span>
+      <button class="pill" id="full-x" type="button">关闭</button>
+    </div>
+    <p class="sheet-p">8 张都在。去卡包把不留的丢进垃圾桶，或点下面一张，用新的换掉它。换下来的会进垃圾桶。</p>
+    <button class="box row-link" id="full-goto" type="button"><span>去卡包腾位置</span><b>→</b></button>
+    <div id="full-list" class="pack-list"></div>
+    <div class="full-ask" id="full-ask"></div>
+    <div class="grid2 sheet-acts" id="full-acts">
+      <button class="box act act-lime" id="full-yes" type="button">确认替换</button>
+      <button class="box act" id="full-no" type="button">先不换</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="drop" data-sheet="sheet">
+  <div class="box sheet-in">
+    <div class="sheet-top">
+      <span class="pill">彻底删除</span>
+      <button class="pill" id="drop-x" type="button">关闭</button>
+    </div>
+    <p class="sheet-p" id="drop-text">删掉之后找不回来。</p>
+    <div class="grid2 sheet-acts">
+      <button class="box act" id="drop-yes" type="button">删除</button>
+      <button class="box act act-lime" id="drop-no" type="button">留下</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="word" data-sheet="sheet">
   <div class="box sheet-in">
     <div class="sheet-top">
       <span class="pill pill-lime" id="w-cat">词条</span>
@@ -171,7 +268,7 @@
   </div>
 </div>
 
-<div class="sheet" id="preview">
+<div class="sheet" id="preview" data-sheet="sheet">
   <div class="box sheet-in">
     <div class="sheet-top">
       <span class="pill pill-lav">图片预览</span>
