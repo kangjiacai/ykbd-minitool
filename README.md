@@ -1,4 +1,4 @@
-# 你可能不知道 · 小工具 v1.3
+# 你可能不知道 · 小工具 v1.4
 
 离线好奇心闯关。每局从内置题库无放回抽 5 题，四选一，限时 14 秒。结算抽一张卡：卡面只有指纹形象、四字中文名和指纹码。分数、答对、用时和称号在卡外的「本局详情」。
 
@@ -18,7 +18,7 @@ python3 -m http.server 8765
 
 ## 上传包
 
-`dist/你可能不知道-v1.3.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。
+`dist/你可能不知道-v1.4.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
 
 重新打包（`scripts/` 不要打进 zip）：
 
@@ -32,8 +32,12 @@ cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.3.zip" . -x '*.DS_Store'
+cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.4.zip" . -x '*.DS_Store'
 ```
+
+## v1.4
+
+动效只做了 7 处，曲线和时长写在 `MOTION.md`。底栏换页不滑动。答题表和结算卡是两处稍明显的动作。
 
 ## v1.3
 

@@ -104,7 +104,9 @@
       var el = $(VIEWS[i]);
       var on = VIEWS[i] === id;
       var fit = el.getAttribute('data-fit') === '1';
-      el.className = 'view' + (fit ? ' fit' : '') + (on ? ' on' : '');
+      var tab = on && (VIEWS[i] === 'v-home' || VIEWS[i] === 'v-me');
+      var soft = on && (VIEWS[i] === 'v-pack' || VIEWS[i] === 'v-dex' || VIEWS[i] === 'v-trash');
+      el.className = 'view' + (fit ? ' fit' : '') + (on ? ' on' : '') + (tab ? ' has-tab' : '') + (soft ? ' enter-soft' : '');
     }
     var cur = $(id);
     if (cur) {
@@ -121,7 +123,6 @@
     $('tabbar').className = tabOn ? 'tabbar on' : 'tabbar';
     $('tab-home').className = 'tab' + (id === 'v-home' ? ' on' : '');
     $('tab-me').className = 'tab' + (id === 'v-me' ? ' on' : '');
-    if (tabOn && cur) cur.className += ' has-tab';
     if (id === 'v-home') renderHome();
     if (id === 'v-me') renderMe();
     if (id === 'v-pack') renderPack();
@@ -391,6 +392,12 @@
     $(codeId).textContent = card.fp;
   }
   function renderResult(card) {
+    var gacha = $('r-card');
+    if (gacha.getAttribute('data-in') !== card.fp) {
+      gacha.setAttribute('data-in', card.fp);
+      gacha.className = 'gacha gacha-fit';
+      if (gacha.offsetWidth) gacha.className = 'gacha gacha-fit enter';
+    }
     paintGacha('r-fig', 'r-name', 'r-code', card);
     $('r-title').textContent = card.title;
     $('r-score').textContent = String(card.score);
