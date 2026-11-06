@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>你可能不知道</title>
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+<div id="app" class="app">
+
+  <section id="v-home" class="view on">
+    <div class="top">
+      <span class="logo"><i></i>你可能不知道</span>
+      <span class="pill" id="home-day">还没开局</span>
+    </div>
+    <div class="box hero">
+      <span class="pill pill-lav tilt-l">今日 5 题</span>
+      <h1 class="hero-t">它就在你手边<br>但你不知道<br>它<span class="mark">叫什么</span></h1>
+      <div class="hero-fig" aria-hidden="true">
+        <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 168 C60 150 96 146 128 150" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="58" cy="157" r="7" fill="#fff" stroke="#111" stroke-width="2.2"/>
+          <circle cx="102" cy="149" r="7" fill="#fff" stroke="#111" stroke-width="2.2"/>
+          <path d="M58 157 C70 120 120 128 140 104 C160 80 176 84 196 72" fill="none" stroke="#111" stroke-width="13.4" stroke-linecap="round"/>
+          <path d="M102 149 C112 176 150 186 176 176" fill="none" stroke="#111" stroke-width="13.4" stroke-linecap="round"/>
+          <path d="M58 157 C70 120 120 128 140 104 C160 80 176 84 196 72" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+          <path d="M58 157 C70 120 120 128 140 104 C160 80 176 84 196 72" fill="none" stroke="#111" stroke-width="1.32" stroke-dasharray="3 6" opacity=".35"/>
+          <path d="M102 149 C112 176 150 186 176 176" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+          <g transform="translate(214 62) rotate(-28)">
+            <rect x="-20" y="-6.5" width="40" height="13" rx="6.5" fill="#C8F031" stroke="#111" stroke-width="2.2"/>
+            <line x1="-12" y1="-6" x2="-12" y2="6" stroke="#111" stroke-width="1.32" opacity=".5"/>
+          </g>
+        </svg>
+      </div>
+      <p class="hero-sub">熟悉的东西，冷门的英文名</p>
+    </div>
+    <button class="box btn-main" id="btn-start" type="button"><span>开始一局</span><i class="arrow">→</i></button>
+    <div class="grid2">
+      <button class="box mini" id="btn-pack" type="button">
+        <span class="mini-k">卡包</span>
+        <span class="mini-n"><b id="home-pack-n">0</b><em id="home-pack-max">/8</em></span>
+        <span class="mini-figs" id="home-figs"></span>
+      </button>
+      <button class="box mini mini-lav" id="btn-me" type="button">
+        <span class="mini-k">我的</span>
+        <span class="mini-title" id="home-level">见习</span>
+        <span class="pill" id="home-lv">Lv.1</span>
+      </button>
+    </div>
+  </section>
+
+  <section id="v-quiz" class="view">
+    <div class="top">
+      <span class="logo"><i></i>你可能不知道</span>
+      <span class="pill" id="q-count">1 / 5</span>
+    </div>
+    <div class="bar"><i id="q-prog"></i></div>
+    <div class="box board">
+      <div class="figwrap" id="q-fig"></div>
+      <span class="pill pill-lav tilt-r sticker" id="q-vibe">冷门</span>
+      <span class="pill timer-pill" id="q-sec">剩 14 秒</span>
+    </div>
+    <h1 class="q-t" id="q-text"></h1>
+    <div class="opts" id="q-opts"></div>
+    <div class="box fact" id="q-fact">
+      <span class="pill pill-lime" id="q-pts">+0</span>
+      <p id="q-fact-t"></p>
+    </div>
+    <button class="box btn-main btn-next" id="q-next" type="button"><span id="q-next-t">下一题</span><i class="arrow">→</i></button>
+  </section>
+
+  <section id="v-result" class="view">
+    <div class="top">
+      <span class="logo"><i></i>你可能不知道</span>
+      <span class="pill" id="r-saved">已入卡包</span>
+    </div>
+    <div class="gacha" id="r-card">
+      <span class="pill tilt-l gacha-tag">你可能不知道</span>
+      <div class="gacha-dot"></div>
+      <div class="gacha-sticker" id="r-fig"></div>
+      <div class="gacha-name" id="r-name"></div>
+      <div class="gacha-code" id="r-code"></div>
+    </div>
+    <div class="box detail">
+      <div class="detail-k">本局详情</div>
+      <div class="detail-head">
+        <h2 id="r-title">路人观察员</h2>
+        <div class="detail-score"><b id="r-score">0</b><span>分</span></div>
+      </div>
+      <div class="detail-meta">
+        <div><span>答对</span><b id="r-correct">0/5</b></div>
+        <div><span>用时</span><b id="r-time">0 秒</b></div>
+      </div>
+      <ol class="r-list" id="r-list"></ol>
+    </div>
+    <button class="box btn-main" id="r-save-card" type="button"><span>存到相册</span><i class="arrow">↓</i></button>
+    <div class="grid3 acts">
+      <button class="box act" id="r-save-av" type="button">只存形象</button>
+      <button class="box act act-lime" id="r-again" type="button">再来一局</button>
+      <button class="box act" id="r-home" type="button">回首页</button>
+    </div>
+  </section>
+
+  <section id="v-me" class="view">
+    <div class="top">
+      <button class="pill" id="me-home" type="button">← 首页</button>
+      <span class="pill">本机</span>
+    </div>
+    <div class="box lv-card">
+      <span class="mini-k">当前等级</span>
+      <h1 id="p-level">见习</h1>
+      <div class="lv-row">
+        <span class="pill" id="p-lv">Lv.1</span>
+        <div class="bar bar-in"><i id="p-prog"></i></div>
+      </div>
+      <p class="lv-next" id="p-next">再答对 10 题升级「侦探」</p>
+    </div>
+    <div class="grid3">
+      <div class="box stat"><b id="p-correct">0</b><span>答对</span></div>
+      <div class="box stat"><b id="p-games">0</b><span>局数</span></div>
+      <div class="box stat"><b id="p-streak">0</b><span>最长连对</span></div>
+    </div>
+    <div class="sec-h" id="pack-anchor"><span>卡包</span><span class="pill" id="pack-count">0 / 8</span></div>
+    <div id="pack-list" class="pack-list"></div>
+    <div class="sec-h"><span>图鉴</span><span class="pill" id="p-dex">0 / 64</span></div>
+    <div class="dex" id="dex-list"></div>
+    <button class="box btn-main" id="pack-start" type="button"><span>开始一局</span><i class="arrow">→</i></button>
+    <p class="foot">记录只存在这台手机 · 卡包最多 8 张，满了挤掉最早的。<button class="link" id="p-clear" type="button">清除</button></p>
+  </section>
+
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="box sheet-in">
+    <div class="sheet-top">
+      <span class="pill pill-lav">卡包</span>
+      <button class="pill" id="d-close" type="button">关闭</button>
+    </div>
+    <div class="gacha gacha-sm">
+      <span class="pill tilt-l gacha-tag">你可能不知道</span>
+      <div class="gacha-dot"></div>
+      <div class="gacha-sticker" id="d-fig"></div>
+      <div class="gacha-name" id="d-name"></div>
+      <div class="gacha-code" id="d-code"></div>
+    </div>
+    <div class="detail detail-flat">
+      <div class="detail-k">本局详情</div>
+      <h2 id="d-title"></h2>
+      <p class="d-sub" id="d-sub"></p>
+      <ol class="r-list" id="d-list"></ol>
+    </div>
+    <div class="grid2 sheet-acts">
+      <button class="box act act-lime" id="d-save-card" type="button">存到相册</button>
+      <button class="box act" id="d-save-av" type="button">只存形象</button>
+    </div>
+    <button class="link link-c" id="d-del" type="button">移出卡包</button>
+  </div>
+</div>
+
+<div class="sheet" id="word">
+  <div class="box sheet-in">
+    <div class="sheet-top">
+      <span class="pill pill-lime" id="w-cat">词条</span>
+      <button class="pill" id="w-close" type="button">关闭</button>
+    </div>
+    <div class="box w-fig" id="w-fig"></div>
+    <h2 class="w-name" id="w-name"></h2>
+    <p class="w-q" id="w-q"></p>
+    <p class="w-fact" id="w-fact"></p>
+  </div>
+</div>
+
+<div class="sheet" id="preview">
+  <div class="box sheet-in">
+    <div class="sheet-top">
+      <span class="pill pill-lav">图片预览</span>
+      <button class="pill" id="pv-close" type="button">关闭</button>
+    </div>
+    <p class="pv-tip" id="pv-tip">请在小红书里打开，才能一键存到相册。浏览器里可以长按图片另存。</p>
+    <img id="pv-img" class="pv-img" alt="预览" />
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<canvas id="cv" class="cv" width="10" height="10"></canvas>
+
+<script src="./data/bank.js"></script>
+<script src="./js/platform.js"></script>
+<script src="./js/fingerprint.js"></script>
+<script src="./js/figure.js"></script>
+<script src="./js/render.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
