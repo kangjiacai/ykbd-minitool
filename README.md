@@ -29,15 +29,19 @@ python3 -m http.server 8765
 ```bash
 rm -rf /tmp/ykbd-stage
 mkdir -p /tmp/ykbd-stage/css /tmp/ykbd-stage/js /tmp/ykbd-stage/data /tmp/ykbd-stage/fonts
-cp index.html favicon.ico /tmp/ykbd-stage/
+cp index.html /tmp/ykbd-stage/
 cp css/app.css /tmp/ykbd-stage/css/
 cp js/*.js /tmp/ykbd-stage/js/
 cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.6.zip" . -x '*.DS_Store'
+rm -f "dist/你可能不知道-v1.6.zip"
+( cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.6.zip" . -x '*.DS_Store' )
+node scripts/audit_artifact.mjs "dist/你可能不知道-v1.6.zip"
 ```
+
+包内只允许这些后缀：jpg、jpeg、css、gif、svg、png、js、json、html、woff、woff2、webp。其它类型（包括 ico）会让 `audit_artifact.mjs` 失败。
 
 ## v1.6.0
 
