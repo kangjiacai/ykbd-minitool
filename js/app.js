@@ -1,13 +1,14 @@
-/* 你可能不知道 · v1.1
+/* 你可能不知道 · v1.6
  * 首页 → 答题（弹窗反馈）→ 结算（手动入包）→ 我的 / 卡包 / 图鉴 / 垃圾桶
  * 右上角留给容器胶囊。新局不自动入卡包。满员不静默踢人。
+ * 形象用 B3 全身引擎。指纹码原样传入，四字名仍由本工具的指纹决定。
  */
 (function () {
   var BANK = window.YKBD_BANK;
   var P = window.YKBD_P;
   var F = window.YKBD_F;
   var R = window.YKBD_R;
-  var FIG = window.YKBD_FIG;
+  var FIG = window.YKBD_FIGURE;
   var ROUND = 5;
   var LIMIT = F.TIME_LIMIT;
   var PACK_MAX = F.PACK_MAX;
@@ -131,6 +132,12 @@
     if (id === 'v-result' && current) renderResult(current);
   }
   function show(id) { paint(id); }
+  function currentView() {
+    for (var i = 0; i < VIEWS.length; i++) {
+      if ($(VIEWS[i]).className.indexOf(' on') >= 0) return VIEWS[i];
+    }
+    return '';
+  }
 
   var album = [];
   var trash = [];
@@ -195,13 +202,13 @@
     $('home-pack-max').textContent = '/' + PACK_MAX;
     var figs = '';
     var n = Math.min(2, album.length);
-    for (var i = 0; i < n; i++) figs += FIG.render(album[i].fp);
+    for (var i = 0; i < n; i++) figs += FIG.figureSVG(album[i].fp);
     $('home-figs').innerHTML = figs;
   }
 
   function cardRow(c, i, extra) {
     var name = c.name || F.chineseName(c.fp);
-    return '<button class="box pack-item" type="button" data-i="' + i + '"><div class="av">' + FIG.render(c.fp) + '</div>' +
+    return '<button class="box pack-item" type="button" data-i="' + i + '"><div class="av">' + FIG.figureSVG(c.fp) + '</div>' +
       '<div class="pi-main"><div class="pi-t">' + esc(name) + '</div><div class="pi-s">' + esc(c.fp) + (extra || '') + '</div></div></button>';
   }
 
@@ -258,7 +265,7 @@
     var h = '';
     trash.forEach(function (c, i) {
       var name = c.name || F.chineseName(c.fp);
-      h += '<div class="box trash-item" data-i="' + i + '"><div class="trash-main"><div class="av">' + FIG.render(c.fp) + '</div>' +
+      h += '<div class="box trash-item" data-i="' + i + '"><div class="trash-main"><div class="av">' + FIG.figureSVG(c.fp) + '</div>' +
         '<div class="pi-main"><div class="pi-t">' + esc(name) + '</div><div class="pi-s">' + esc(c.fp) + '</div></div></div>' +
         '<div class="trash-acts"><button class="box act act-lime" type="button" data-act="back">找回</button>' +
         '<button class="box act" type="button" data-act="drop">彻底删除</button></div></div>';
@@ -387,7 +394,7 @@
     return h;
   }
   function paintGacha(figId, nameId, codeId, card) {
-    $(figId).innerHTML = FIG.render(card.fp);
+    $(figId).innerHTML = FIG.figureSVG(card.fp);
     $(nameId).textContent = card.name || F.chineseName(card.fp);
     $(codeId).textContent = card.fp;
   }
@@ -481,7 +488,7 @@
       $('r-add').className = 'box btn-main is-off';
     }
     renderHome();
-    var here = stack[stack.length - 1];
+    var here = currentView();
     if (here === 'v-trash') renderTrash();
     if (here === 'v-pack') renderPack();
     if (here === 'v-me') renderMe();
