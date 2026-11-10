@@ -322,15 +322,20 @@
     long: 'swept', pony: 'fringe', afro: 'curly', shoulder: 'swept', spiky: 'spiky',
     buzz: 'buzz', swoop: 'swoop'
   };
-  /* 领口开口各款共用，衣身下摆和肩宽按款式分开。 */
+  /* 非连衣裙共用一条下摆。必须压过三种腿根（最低约 y514）至少 2px。 */
+  var HEM_Y = 518;
+  function hemLine(x0, x1) {
+    return ' L' + x1 + ' ' + HEM_Y + ' L' + x0 + ' ' + HEM_Y + ' Z';
+  }
+  /* 领口开口各款共用，肩宽仍按款式分开，下摆锁在 HEM_Y。 */
   var TORSO = {
-    tee: 'M136 348 C136 318 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 264 318 264 348 L262 446 C246 464 154 464 138 446 Z',
-    sweater: 'M108 334 C108 308 138 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C262 290 292 308 292 334 L296 512 C284 556 116 556 104 512 Z',
-    shirt: 'M124 348 C124 316 146 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 290 276 316 276 348 L270 468 C286 524 236 498 200 490 C164 498 114 524 130 468 Z',
-    hoodie: 'M102 352 C102 318 140 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C260 290 298 318 298 352 L304 548 L96 548 Z',
-    stripes: 'M98 362 C116 332 146 304 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 304 284 332 302 362 L296 508 C272 528 128 528 104 508 Z',
-    vest: 'M118 344 C118 314 144 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C256 290 282 314 282 344 L276 524 C258 542 142 542 124 524 Z',
-    overalls: 'M132 346 C132 316 148 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C252 290 268 316 268 346 L264 430 C248 446 152 446 136 430 Z',
+    tee: 'M136 348 C136 318 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 264 318 264 348' + hemLine(136, 264),
+    sweater: 'M108 334 C108 308 138 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C262 290 292 308 292 334' + hemLine(104, 296),
+    shirt: 'M124 348 C124 316 146 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 290 276 316 276 348' + hemLine(124, 276),
+    hoodie: 'M102 352 C102 318 140 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C260 290 298 318 298 352' + hemLine(96, 304),
+    stripes: 'M98 362 C116 332 146 304 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 304 284 332 302 362' + hemLine(104, 296),
+    vest: 'M118 344 C118 314 144 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C256 290 282 314 282 344' + hemLine(124, 276),
+    overalls: 'M132 346 C132 316 148 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C252 290 268 316 268 346' + hemLine(132, 268),
     dress: 'M134 346 C134 316 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 266 316 266 346 L262 432 C246 450 154 450 138 432 Z'
   };
   var SKIRT = 'M150 428 C108 468 64 548 58 602 C130 624 270 624 342 602 C336 548 292 468 250 428 C220 448 180 448 150 428 Z';
@@ -340,8 +345,6 @@
   var LEG_R_OUT = 'M238 498 C246 555 255 618 270 664 L226 670 C220 618 214 555 204 508 Z';
   var LEG_L_WALK = 'M150 508 C128 570 108 635 98 668 L146 672 C158 632 164 575 176 514 Z';
   var LEG_R_WALK = 'M248 500 C272 555 302 625 318 658 L274 666 C262 625 246 560 226 508 Z';
-  /* 裤腰：最短下摆（约 y430）之上接到腿根（约 y515）之下。非连衣裙才画，颜色用裤子色。 */
-  var HIP = 'M138 416 C138 402 164 394 200 394 C236 394 262 402 262 416 L266 520 C252 536 148 536 134 520 Z';
   var SHOE_L = 'M122 658 C122 658 112 676 132 680 L178 680 C188 680 188 668 178 664 Z';
   var SHOE_R = 'M222 658 C222 658 212 676 232 680 L278 680 C288 680 288 668 278 664 Z';
   var SHOE_L_OUT = 'M116 660 C116 660 106 678 128 682 L182 682 C192 682 194 670 184 666 Z';
@@ -565,7 +568,6 @@
     } else {
       add('shadow', P(legL, '#111', 'none', 0, 10, 12));
       add('shadow', P(legR, '#111', 'none', 0, 10, 12));
-      add('shadow', P(HIP, '#111', 'none', 0, 10, 12));
     }
 
     if (hairId === 'long' || hairId === 'shoulder') {
@@ -595,8 +597,6 @@
     } else {
       add('leg', P(legL, C.pants, INK, SW));
       add('leg', P(legR, C.pants, INK, SW));
-      /* 腿层、躯干之下：盖住腿根描边，衬衫下摆再压住裤腰上沿。 */
-      add('hip', P(HIP, C.pants, 'none', 0));
     }
     add('shoeUpper', P(shoeL, C.shoe, INK, SW));
     add('shoeUpper', P(shoeR, C.shoe, INK, SW));
@@ -626,25 +626,25 @@
       add('hood', P('M186 348 L176 418 M214 348 L224 418', 'none', INK, 4));
       add('hood', Ci(176, 422, 7, C.accent, INK, 3));
       add('hood', Ci(224, 422, 7, C.accent, INK, 3));
-      add('pocket', P('M132 468 L148 424 L252 424 L268 468 L260 530 L140 530 Z', C.deep, INK, 5));
+      add('pocket', P('M132 450 L148 408 L252 408 L268 450 L260 ' + (HEM_Y - 16) + ' L140 ' + (HEM_Y - 16) + ' Z', C.deep, INK, 5));
     } else if (body === 'overalls') {
       add('body', P('M146 330 L158 392 M254 330 L242 392', 'none', C.main, 12));
       add('body', P('M146 330 L158 392 M254 330 L242 392', 'none', INK, 3));
-      add('body', P('M148 378 L252 378 L270 530 C236 552 164 552 130 530 Z', C.main, INK, 5));
+      add('body', P('M148 378 L252 378 L278 ' + HEM_Y + ' L122 ' + HEM_Y + ' Z', C.main, INK, 5));
       add('button', Ci(162, 396, 6, INK, 'none', 0));
       add('button', Ci(238, 396, 6, INK, 'none', 0));
       add('pocket', P('M176 412 L224 412 L224 448 L176 448 Z', 'none', INK, 4));
     } else if (body === 'shirt') {
       add('collar', P('M164 292 L148 348 L188 338 Z', shirt, INK, 4.5));
       add('collar', P('M236 292 L252 348 L212 338 Z', shirt, INK, 4.5));
-      add('body', P('M200 336 L200 478', 'none', INK, 4));
+      add('body', P('M200 336 L200 ' + (HEM_Y - 22), 'none', INK, 4));
       add('button', Ci(200, 360, 5, C.accent, INK, 2));
       add('button', Ci(200, 396, 5, C.accent, INK, 2));
       add('button', Ci(200, 432, 5, C.accent, INK, 2));
       add('pocket', P('M214 390 L248 390 L248 422 L214 422 Z', 'none', INK, 4));
     } else if (body === 'sweater') {
       add('collar', P('M150 306 Q200 336 250 306', 'none', C.deep, 12));
-      add('body', P('M112 492 L288 492 L278 548 C236 564 164 564 122 548 Z', C.deep, INK, 5));
+      add('body', P('M112 ' + (HEM_Y - 28) + ' L288 ' + (HEM_Y - 28) + ' L296 ' + HEM_Y + ' L104 ' + HEM_Y + ' Z', C.deep, INK, 5));
     } else if (body === 'dress') {
       add('body', P(SKIRT, shirt, INK, SW));
       add('body', P('M154 440 L246 440', 'none', INK, 5));
@@ -1272,10 +1272,10 @@
       var sh = shapes[s];
       if (!sh || sh.op !== 'path' || !sh.d || sh.fill === 'none' || !sh.fill) continue;
       var bit = 0;
-      if (sh.part === 'body' || sh.part === 'hip') bit = UPPER;
+      if (sh.part === 'body') bit = UPPER;
       else if (sh.part === 'leg') bit = LEG;
       if (!bit) continue;
-      paintRings(mask, w, y0, y1, pathRings(sh.d), bit, sh.part === 'hip' ? 0 : Math.floor((sh.sw || 0) / 2));
+      paintRings(mask, w, y0, y1, pathRings(sh.d), bit, Math.floor((sh.sw || 0) / 2));
     }
     function pix(x, y) {
       if (x < 0 || x >= w || y < y0 || y >= y1) return 0;
@@ -1337,6 +1337,42 @@
     }
     if (!holes) return [];
     return ['waist ' + model.body.id + '/' + model.pose.id + ' holes ' + holes + ' worst ' + worst + 'px @' + worstX];
+  }
+  /* 非连衣裙的衣身下摆必须整段落在 HEM_Y，不能只靠两侧下探。 */
+  function hemIssues(model, shapes) {
+    if (model.body.id === 'dress') return [];
+    var torso = null;
+    var i;
+    for (i = 0; i < shapes.length; i++) {
+      var sh = shapes[i];
+      if (sh.part === 'body' && sh.op === 'path' && sh.fill && sh.fill !== 'none') {
+        torso = sh;
+        break;
+      }
+    }
+    if (!torso) return ['hem ' + model.body.id + ' missing'];
+    var y0 = 280;
+    var y1 = 650;
+    var w = VIEW_W;
+    var mask = new Uint8Array(w * (y1 - y0));
+    paintRings(mask, w, y0, y1, pathRings(torso.d), 1, 0);
+    var expect = HEM_Y - 1;
+    var bad = 0;
+    var sample = '';
+    var x;
+    var y;
+    for (x = 150; x <= 250; x++) {
+      var bottom = -1;
+      for (y = y1 - 1; y >= y0; y--) {
+        if (mask[(y - y0) * w + x]) { bottom = y; break; }
+      }
+      if (bottom !== expect) {
+        bad++;
+        if (!sample) sample = 'x' + x + '=' + bottom;
+      }
+    }
+    if (!bad) return [];
+    return ['hem ' + model.body.id + '/' + model.pose.id + ' ' + bad + ' ' + sample + ' want ' + expect];
   }
 
   function audit(model, shapes) {
@@ -1409,6 +1445,8 @@
     }
     var waist = waistIssues(model, shapes);
     for (i = 0; i < waist.length; i++) problems.push(waist[i]);
+    var hem = hemIssues(model, shapes);
+    for (i = 0; i < hem.length; i++) problems.push(hem[i]);
     return problems;
   }
 
@@ -1428,6 +1466,7 @@
     combo: comboCount(),
     HAIR_TYPE: HAIR_TYPE,
     hairs: HAIR,
+    HEM_Y: HEM_Y,
     anchors: {
       headCx: HEAD_CX,
       headCy: HEAD_CY,

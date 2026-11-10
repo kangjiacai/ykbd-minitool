@@ -18,7 +18,10 @@ const failures = [];
 function check(seed, label) {
   const model = api.figureModel(seed);
   const shapes = api.figureShapes(seed);
-  const problems = api.audit(model, shapes).filter((p) => String(p).indexOf('waist') === 0);
+  const problems = api.audit(model, shapes).filter((p) => {
+    const s = String(p);
+    return s.indexOf('waist') === 0 || s.indexOf('hem') === 0;
+  });
   if (problems.length) failures.push(label + ' ' + problems.join('; '));
 }
 
@@ -52,5 +55,11 @@ if (failures.length) {
   console.error('FAIL', failures.length);
   process.exit(1);
 }
-console.log('PASS waist', bodyDim.options.length * poseDim.options.length, 'combos +', randomSeeds.length, 'seeds');
+if (api.HEM_Y !== 518) failures.push('HEM_Y ' + api.HEM_Y);
+if (failures.length) {
+  console.error(failures.slice(0, 30).join('\n'));
+  console.error('FAIL', failures.length);
+  process.exit(1);
+}
+console.log('PASS waist', bodyDim.options.length * poseDim.options.length, 'combos +', randomSeeds.length, 'seeds', 'HEM_Y', api.HEM_Y);
 console.log('棉线杯子', api.figureModel('GG2F-08G8-8783').body.id, api.figureModel('GG2F-08G8-8783').pose.id);

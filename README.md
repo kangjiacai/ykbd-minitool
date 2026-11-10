@@ -51,7 +51,7 @@ node scripts/waist_check.mjs
 
 「我的」标题旁和结算页底部有「关注作者」。只在客户端 9.51+（`buildVersion / 1000 >= 9510`）且 `followAuthor` / `getFollowStatus` 都在时出现。未关注显示按钮，已关注禁用成「已关注」，作者本人隐藏。用户关掉确认框不提示；当天次数用完提示「今天先到这儿啦」。
 
-短袖和衬衣的腰上原来会露出底。裤腰画在腿层、躯干下面，从最短下摆接到腿根，连衣裙仍只留裙子。腰缝用光栅扫，不看包围盒。
+短袖和衬衣的腰上原来会露出底。非连衣裙的下摆锁在同一条 HEM_Y，压过腿根至少 2px；连衣裙仍是裙子加大腿。腰缝按像素扫，并核对下摆高度。
 
 自检：`node scripts/share_flow.test.mjs` 和 `node scripts/waist_check.mjs`
 
