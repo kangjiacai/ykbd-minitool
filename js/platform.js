@@ -1,4 +1,4 @@
-/* 平台能力封装：按 2026-10-30 在线文档（§3.1 / §3.4 / §3.5 / §3.6 / §3.7 / §3.13）
+/* 平台能力封装：按在线文档（§3.1 / §3.3 / §3.4 / §3.5 / §3.6 / §3.7 / §3.15）
  * 一律先判 window.xhs.miniTool 与方法存在，再判客户端版本；全部失败可降级。
  */
 (function () {
@@ -69,6 +69,61 @@
     }
     try { await m.saveImageToPhotosAlbum({ filePath: filePath }); return { ok: true }; }
     catch (e) { return { ok: false, reason: 'fail', msg: (e && (e.errMsg || e.message)) || '' }; }
+  };
+
+  /* ---------- 发笔记：postNote；大图先 writeTempFile，失败再直接传 data URI ---------- */
+  P.canPostNote = function () { return has('postNote'); };
+  P.postPhotoNote = async function (opts) {
+    var m = mt();
+    if (!m || typeof m.postNote !== 'function') return { ok: false, reason: 'noxhs' };
+    var dataUrl = opts && opts.dataUrl;
+    var filePath = dataUrl;
+    if (typeof m.writeTempFile === 'function') {
+      try {
+        var w = await m.writeTempFile({ data: dataUrl });
+        if (w && w.filePath) filePath = w.filePath;
+      } catch (e) { filePath = dataUrl; }
+    }
+    try {
+      await m.postNote({
+        title: opts.title,
+        content: opts.content,
+        pageType: 'photo_publish',
+        mediaInfo: { image_resources: [{ url: filePath }] }
+      });
+      return { ok: true, filePath: filePath };
+    } catch (e) {
+      return { ok: false, reason: 'fail', msg: (e && (e.errMsg || e.message)) || '' };
+    }
+  };
+
+  /* ---------- 关注作者：客户端 9.51+（buildVersion/1000 >= 9510） ---------- */
+  P.canFollow = async function () {
+    if (!has('followAuthor') || !has('getFollowStatus')) return false;
+    var b = await getBuildVersion();
+    return Math.floor(b / 1000) >= 9510;
+  };
+  P.readFollowStatus = async function () {
+    try {
+      var r = await mt().getFollowStatus();
+      if (!r || typeof r.follow_status !== 'number') return -1;
+      return r.follow_status;
+    } catch (e) { return -1; }
+  };
+  P.requestFollow = async function () {
+    var m = mt();
+    if (!m || typeof m.followAuthor !== 'function') return { type: 'missing' };
+    try {
+      var r = await m.followAuthor();
+      var st = (r && typeof r.follow_status === 'number') ? r.follow_status : -1;
+      return { type: 'ok', status: st };
+    } catch (e) {
+      var code = Number(e && e.errCode);
+      if (code === 20002) return { type: 'closed' };
+      if (code === 15404) return { type: 'limit' };
+      if (code === 10003) return { type: 'busy' };
+      return { type: 'fail' };
+    }
   };
 
   /* ---------- 振动：9.50+，可选；不阻塞 ---------- */

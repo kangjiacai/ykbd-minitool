@@ -1,13 +1,15 @@
-/* 你可能不知道 · v1.6
+/* 你可能不知道 · v1.7
  * 首页 → 答题（弹窗反馈）→ 结算（手动入包）→ 我的 / 卡包 / 图鉴 / 垃圾桶
  * 右上角留给容器胶囊。新局不自动入卡包。满员不静默踢人。
  * 形象用 B3 全身引擎。指纹码原样传入，四字名仍由本工具的指纹决定。
+ * 结算和卡包详情可把卡图发成笔记。我的 / 结算可关注作者（客户端 9.51+）。
  */
 (function () {
   var BANK = window.YKBD_BANK;
   var P = window.YKBD_P;
   var F = window.YKBD_F;
   var R = window.YKBD_R;
+  var S = window.YKBD_S;
   var FIG = window.YKBD_FIGURE;
   var ROUND = 5;
   var LIMIT = F.TIME_LIMIT;
@@ -528,9 +530,71 @@
     setSheet('sheet', true);
   }
 
+  var poster = S.createPoster({
+    canPost: function () { return P.canPostNote(); },
+    ensureFonts: function () { return R.ensureFonts(); },
+    exportCard: function (card) { return R.exportShareCard(card); },
+    postPhoto: function (opts) { return P.postPhotoNote(opts); }
+  });
+  var followCtl = S.createFollow({
+    supported: function () { return P.canFollow(); },
+    read: function () { return P.readFollowStatus(); },
+    follow: function () { return P.requestFollow(); }
+  });
+
+  function paintFollow() {
+    var v = followCtl.view();
+    var ids = ['me-follow', 'r-follow'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = $(ids[i]);
+      el.textContent = v.label || '关注作者';
+      el.disabled = !!v.disabled;
+      if (v.hidden) el.className = 'follow-btn is-hidden';
+      else if (v.label === '已关注') el.className = 'follow-btn is-done';
+      else el.className = 'follow-btn';
+    }
+  }
+  async function onFollow() {
+    if (followCtl.pending()) return;
+    var v = followCtl.view();
+    if (v.hidden || v.label !== '关注作者') return;
+    var task = followCtl.tap();
+    paintFollow();
+    var res = await task;
+    paintFollow();
+    if (res && res.notice) toast(res.notice);
+  }
+  function setPostBusy(on) {
+    var ids = ['r-post', 'd-post'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = $(ids[i]);
+      el.disabled = !!on;
+      el.className = 'box btn-post' + (on ? ' is-pending' : '');
+      el.textContent = on ? '正在准备…' : '用这张卡发笔记';
+    }
+  }
+  async function onPost(card) {
+    if (!card) return;
+    if (!P.canPostNote()) { toast('请在小红书 App 内使用'); return; }
+    if (poster.pending() || busy) return;
+    setPostBusy(true);
+    try {
+      var res = await poster.tap(card);
+      if (!res || res.reason === 'pending') return;
+      if (res.ok) {
+        toast('已打开发布页');
+        P.vibrate('light');
+      } else if (res.reason === 'noxhs') toast('请在小红书 App 内使用');
+      else if (res.reason === 'render') toast('生成图片失败');
+      else toast('没能打开发布页');
+    } finally {
+      setPostBusy(false);
+    }
+  }
+
   var busy = false;
   async function saveImg(kind, card) {
-    if (busy || !card) return;
+    if (busy || poster.pending() || !card) return;
     busy = true;
     try {
       await R.ensureFonts();
@@ -610,6 +674,9 @@
       $('r-toggle-t').textContent = open ? '收起' : '展开词表';
     });
     $('r-add').addEventListener('click', function () { addToAlbum(current, -1); });
+    $('r-post').addEventListener('click', function () { onPost(current); });
+    $('r-follow').addEventListener('click', onFollow);
+    $('me-follow').addEventListener('click', onFollow);
     $('r-save-av').addEventListener('click', function () { saveImg('avatar', current); });
     $('r-again').addEventListener('click', startGame);
     $('r-home').addEventListener('click', function () { closeSheets(); show('v-home'); });
@@ -643,6 +710,7 @@
     });
 
     $('d-close').addEventListener('click', function () { setSheet('sheet', false); });
+    $('d-post').addEventListener('click', function () { onPost(detailCard); });
     $('d-save-card').addEventListener('click', function () { saveImg('card', detailCard); });
     $('d-save-av').addEventListener('click', function () { saveImg('avatar', detailCard); });
     $('d-trash').addEventListener('click', async function () {
@@ -745,4 +813,5 @@
 
   bind();
   loadData().then(function () { show('v-home'); }, function () { show('v-home'); });
+  followCtl.load().then(function () { paintFollow(); }, function () { paintFollow(); });
 })();
