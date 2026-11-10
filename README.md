@@ -1,4 +1,4 @@
-# 你可能不知道 · 小工具 v1.5
+# 你可能不知道 · 小工具 v1.6.0
 
 离线好奇心闯关。每局从内置题库无放回抽 5 题，四选一，限时 14 秒。结算抽一张卡：卡面只有指纹形象、四字中文名和指纹码。分数、答对、用时和称号在卡外的「本局详情」。
 
@@ -22,22 +22,26 @@ python3 -m http.server 8765
 
 ## 上传包
 
-`dist/你可能不知道-v1.5.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
+`dist/你可能不知道-v1.6.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
 
 重新打包（`scripts/` 不要打进 zip）：
 
 ```bash
 rm -rf /tmp/ykbd-stage
 mkdir -p /tmp/ykbd-stage/css /tmp/ykbd-stage/js /tmp/ykbd-stage/data /tmp/ykbd-stage/fonts
-cp index.html /tmp/ykbd-stage/
+cp index.html favicon.ico /tmp/ykbd-stage/
 cp css/app.css /tmp/ykbd-stage/css/
 cp js/*.js /tmp/ykbd-stage/js/
 cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.5.zip" . -x '*.DS_Store'
+cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.6.zip" . -x '*.DS_Store'
 ```
+
+## v1.6.0
+
+形象换成 B3 全身引擎（`ykbd-figure-parts` `a9a3acb`，`js/figure-avatar.js`）。画布 400×720。结算卡、卡包、首页缩略、垃圾桶，以及「存形象 / 存到相册」都走这套绘制。指纹仍是原来的 12 位 Crockford 码，原样传进引擎。四字名仍由本工具的指纹函数决定，样张编码不变。卡面只有形象、名字和编码。题库和规则没动。
 
 ## v1.5
 
