@@ -40,6 +40,7 @@ rm -f "dist/你可能不知道-v1.7.zip"
 ( cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.7.zip" . -x '*.DS_Store' )
 node scripts/audit_artifact.mjs "dist/你可能不知道-v1.7.zip"
 node scripts/share_flow.test.mjs
+node scripts/waist_check.mjs
 ```
 
 包内只允许这些后缀：jpg、jpeg、css、gif、svg、png、js、json、html、woff、woff2、webp。其它类型（包括 ico）会让 `audit_artifact.mjs` 失败。
@@ -50,7 +51,9 @@ node scripts/share_flow.test.mjs
 
 「我的」标题旁和结算页底部有「关注作者」。只在客户端 9.51+（`buildVersion / 1000 >= 9510`）且 `followAuthor` / `getFollowStatus` 都在时出现。未关注显示按钮，已关注禁用成「已关注」，作者本人隐藏。用户关掉确认框不提示；当天次数用完提示「今天先到这儿啦」。
 
-自检：`node scripts/share_flow.test.mjs`
+短袖和衬衣的腰上原来会露出底。裤腰画在腿层、躯干下面，从最短下摆接到腿根，连衣裙仍只留裙子。腰缝用光栅扫，不看包围盒。
+
+自检：`node scripts/share_flow.test.mjs` 和 `node scripts/waist_check.mjs`
 
 ## v1.6.0
 

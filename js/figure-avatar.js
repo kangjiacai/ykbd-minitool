@@ -340,6 +340,8 @@
   var LEG_R_OUT = 'M238 498 C246 555 255 618 270 664 L226 670 C220 618 214 555 204 508 Z';
   var LEG_L_WALK = 'M150 508 C128 570 108 635 98 668 L146 672 C158 632 164 575 176 514 Z';
   var LEG_R_WALK = 'M248 500 C272 555 302 625 318 658 L274 666 C262 625 246 560 226 508 Z';
+  /* 裤腰：最短下摆（约 y430）之上接到腿根（约 y515）之下。非连衣裙才画，颜色用裤子色。 */
+  var HIP = 'M138 416 C138 402 164 394 200 394 C236 394 262 402 262 416 L266 520 C252 536 148 536 134 520 Z';
   var SHOE_L = 'M122 658 C122 658 112 676 132 680 L178 680 C188 680 188 668 178 664 Z';
   var SHOE_R = 'M222 658 C222 658 212 676 232 680 L278 680 C288 680 288 668 278 664 Z';
   var SHOE_L_OUT = 'M116 660 C116 660 106 678 128 682 L182 682 C192 682 194 670 184 666 Z';
@@ -563,6 +565,7 @@
     } else {
       add('shadow', P(legL, '#111', 'none', 0, 10, 12));
       add('shadow', P(legR, '#111', 'none', 0, 10, 12));
+      add('shadow', P(HIP, '#111', 'none', 0, 10, 12));
     }
 
     if (hairId === 'long' || hairId === 'shoulder') {
@@ -592,6 +595,8 @@
     } else {
       add('leg', P(legL, C.pants, INK, SW));
       add('leg', P(legR, C.pants, INK, SW));
+      /* 腿层、躯干之下：盖住腿根描边，衬衫下摆再压住裤腰上沿。 */
+      add('hip', P(HIP, C.pants, 'none', 0));
     }
     add('shoeUpper', P(shoeL, C.shoe, INK, SW));
     add('shoeUpper', P(shoeR, C.shoe, INK, SW));
@@ -1063,6 +1068,277 @@
     }
     return found;
   }
+  /* 把路径铺成折线。误差收到约 0.5px，腰部扫描才不会把缝认丢或认多。 */
+  function pathRings(d) {
+    var tokens = [];
+    var i = 0;
+    var n = d.length;
+    while (i < n) {
+      var c = d.charAt(i);
+      if (c === ' ' || c === ',' || c === '\n' || c === '\t' || c === '\r') { i++; continue; }
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) { tokens.push(c); i++; continue; }
+      var j = i;
+      if (c === '-' || c === '+') j++;
+      var dot = 0;
+      while (j < n) {
+        var ch = d.charAt(j);
+        if (ch >= '0' && ch <= '9') { j++; continue; }
+        if (ch === '.' && !dot) { dot = 1; j++; continue; }
+        break;
+      }
+      tokens.push(parseFloat(d.slice(i, j)));
+      i = j;
+    }
+    var rings = [];
+    var cur = null;
+    var sx = 0;
+    var sy = 0;
+    var cx = 0;
+    var cy = 0;
+    var k = 0;
+    function num() { return tokens[k++]; }
+    function pushPt(x, y) { cur.push({ x: x, y: y }); }
+    function lineTo(x, y) {
+      pushPt(x, y);
+      cx = x;
+      cy = y;
+    }
+    function flat(x0, y0, x1, y1, x2, y2, x3, y3, depth) {
+      var dx = x3 - x0;
+      var dy = y3 - y0;
+      var d1 = Math.abs((x1 - x3) * dy - (y1 - y3) * dx);
+      var d2 = Math.abs((x2 - x3) * dy - (y2 - y3) * dx);
+      var len2 = dx * dx + dy * dy;
+      if (depth > 8 || (d1 + d2) * (d1 + d2) <= 0.25 * len2 + 1e-4) {
+        pushPt(x3, y3);
+        return;
+      }
+      var x01 = (x0 + x1) / 2;
+      var y01 = (y0 + y1) / 2;
+      var x12 = (x1 + x2) / 2;
+      var y12 = (y1 + y2) / 2;
+      var x23 = (x2 + x3) / 2;
+      var y23 = (y2 + y3) / 2;
+      var x012 = (x01 + x12) / 2;
+      var y012 = (y01 + y12) / 2;
+      var x123 = (x12 + x23) / 2;
+      var y123 = (y12 + y23) / 2;
+      var xm = (x012 + x123) / 2;
+      var ym = (y012 + y123) / 2;
+      flat(x0, y0, x01, y01, x012, y012, xm, ym, depth + 1);
+      flat(xm, ym, x123, y123, x23, y23, x3, y3, depth + 1);
+    }
+    while (k < tokens.length) {
+      var cmd = tokens[k++];
+      if (cmd === 'M') {
+        if (cur && cur.length) rings.push(cur);
+        cx = num();
+        cy = num();
+        sx = cx;
+        sy = cy;
+        cur = [{ x: cx, y: cy }];
+      } else if (cmd === 'L') {
+        lineTo(num(), num());
+      } else if (cmd === 'H') {
+        lineTo(num(), cy);
+      } else if (cmd === 'V') {
+        lineTo(cx, num());
+      } else if (cmd === 'C') {
+        var x1 = num();
+        var y1 = num();
+        var x2 = num();
+        var y2 = num();
+        var x = num();
+        var y = num();
+        flat(cx, cy, x1, y1, x2, y2, x, y, 0);
+        cx = x;
+        cy = y;
+      } else if (cmd === 'Q') {
+        var qx = num();
+        var qy = num();
+        var xz = num();
+        var yz = num();
+        flat(cx, cy, cx + (2 / 3) * (qx - cx), cy + (2 / 3) * (qy - cy), xz + (2 / 3) * (qx - xz), yz + (2 / 3) * (qy - yz), xz, yz, 0);
+        cx = xz;
+        cy = yz;
+      } else if (cmd === 'Z' || cmd === 'z') {
+        if (cur && (cx !== sx || cy !== sy)) lineTo(sx, sy);
+        cx = sx;
+        cy = sy;
+      } else {
+        break;
+      }
+    }
+    if (cur && cur.length) rings.push(cur);
+    return rings;
+  }
+  function dilateMask(src, w, h, radius) {
+    var out = new Uint8Array(src.length);
+    var r2 = radius * radius;
+    var y;
+    var x;
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        if (!src[y * w + x]) continue;
+        var dy;
+        var dx;
+        for (dy = -radius; dy <= radius; dy++) {
+          var yy = y + dy;
+          if (yy < 0 || yy >= h) continue;
+          for (dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > r2) continue;
+            var xx = x + dx;
+            if (xx < 0 || xx >= w) continue;
+            out[yy * w + xx] = 1;
+          }
+        }
+      }
+    }
+    return out;
+  }
+  function paintRings(mask, w, y0, y1, rings, bit, radius) {
+    var hgt = y1 - y0;
+    var tmp = radius > 0 ? new Uint8Array(w * hgt) : null;
+    var dest = tmp || mask;
+    var paintBit = tmp ? 1 : bit;
+    var edges = [];
+    var r;
+    var i;
+    for (r = 0; r < rings.length; r++) {
+      var pts = rings[r];
+      var count = pts.length;
+      if (count < 2) continue;
+      var last = pts[count - 1];
+      var first = pts[0];
+      var closed = last.x === first.x && last.y === first.y;
+      var m = closed ? count - 1 : count;
+      for (i = 0; i < m; i++) {
+        var a = pts[i];
+        var b = pts[(i + 1) % m];
+        if (a.y === b.y) continue;
+        var down = a.y < b.y;
+        edges.push({
+          yMin: down ? a.y : b.y,
+          yMax: down ? b.y : a.y,
+          x0: down ? a.x : b.x,
+          yBase: down ? a.y : b.y,
+          dx: (b.x - a.x) / (b.y - a.y),
+          wind: down ? 1 : -1
+        });
+      }
+    }
+    var y;
+    for (y = y0; y < y1; y++) {
+      var yy = y + 0.5;
+      var hits = [];
+      for (i = 0; i < edges.length; i++) {
+        var ed = edges[i];
+        if (yy >= ed.yMin && yy < ed.yMax) hits.push({ x: ed.x0 + ed.dx * (yy - ed.yBase), wind: ed.wind });
+      }
+      if (!hits.length) continue;
+      hits.sort(function (p, q) { return p.x - q.x; });
+      var wind = 0;
+      var h;
+      for (h = 0; h < hits.length; h++) {
+        if (wind !== 0 && h > 0) {
+          var x0 = hits[h - 1].x;
+          var x1 = hits[h].x;
+          var xa = Math.ceil(x0 - 0.5);
+          var xb = Math.floor(x1 - 0.5);
+          if (xa < 0) xa = 0;
+          if (xb > w - 1) xb = w - 1;
+          var row = (y - y0) * w;
+          var p;
+          for (p = xa; p <= xb; p++) dest[row + p] |= paintBit;
+        }
+        wind += hits[h].wind;
+      }
+    }
+    if (!tmp) return;
+    var grown = dilateMask(tmp, w, hgt, radius);
+    var n;
+    for (n = 0; n < grown.length; n++) if (grown[n]) mask[n] |= bit;
+  }
+  /* 光栅：躯干/裤腰/裙子为上装，腿为下装。腰缝按像素看，不用包围盒。 */
+  function waistIssues(model, shapes) {
+    var y0 = 340;
+    var y1 = 680;
+    var w = VIEW_W;
+    var mask = new Uint8Array(w * (y1 - y0));
+    var UPPER = 1;
+    var LEG = 2;
+    var s;
+    for (s = 0; s < shapes.length; s++) {
+      var sh = shapes[s];
+      if (!sh || sh.op !== 'path' || !sh.d || sh.fill === 'none' || !sh.fill) continue;
+      var bit = 0;
+      if (sh.part === 'body' || sh.part === 'hip') bit = UPPER;
+      else if (sh.part === 'leg') bit = LEG;
+      if (!bit) continue;
+      paintRings(mask, w, y0, y1, pathRings(sh.d), bit, sh.part === 'hip' ? 0 : Math.floor((sh.sw || 0) / 2));
+    }
+    function pix(x, y) {
+      if (x < 0 || x >= w || y < y0 || y >= y1) return 0;
+      return mask[(y - y0) * w + x];
+    }
+    var yTop = 1e9;
+    var y;
+    var x;
+    for (y = y0; y < y1; y++) {
+      for (x = 0; x < w; x++) {
+        if ((pix(x, y) & LEG) && y < yTop) yTop = y;
+      }
+    }
+    if (yTop === 1e9) return ['waist ' + model.body.id + '/' + model.pose.id + ' no legs'];
+    var left = 1e9;
+    var right = -1;
+    /* 只取腿根那一截的外沿，不把迈步时撇开的小腿算进腰宽。 */
+    var yBand = yTop + 8;
+    for (y = yTop; y <= yBand && y < y1; y++) {
+      for (x = 0; x < w; x++) {
+        if (!(pix(x, y) & LEG)) continue;
+        if (x < left) left = x;
+        if (x > right) right = x;
+      }
+    }
+    if (left > right) return ['waist ' + model.body.id + '/' + model.pose.id + ' no leg top'];
+    var holes = 0;
+    var worst = 0;
+    var worstX = left;
+    for (x = left; x <= right; x++) {
+      var yLeg = -1;
+      for (y = yTop; y < y1 && y <= yTop + 24; y++) {
+        if (pix(x, y) & LEG) { yLeg = y; break; }
+      }
+      /* 两腿之间没有腿像素时，裤腰仍要盖到最高的腿根，不能留出中线缺口。 */
+      var yLine = yLeg >= 0 ? yLeg : yTop;
+      var row0 = pix(x, yLine);
+      var row1 = pix(x, yLine + 1);
+      var overlap = ((row0 & UPPER) ? 1 : 0) + ((row1 & UPPER) ? 1 : 0);
+      if (!(row0 & (UPPER | LEG)) || !(row1 & (UPPER | LEG)) || overlap < 2) {
+        holes++;
+        var miss = 2 - overlap;
+        if (miss < 1) miss = 1;
+        if (miss > worst) { worst = miss; worstX = x; }
+        continue;
+      }
+      var gap = 0;
+      var seenUpper = false;
+      for (y = yLine; y >= 400; y--) {
+        var p = pix(x, y);
+        if (p & UPPER) seenUpper = true;
+        else if (!(p & LEG)) gap++;
+        if (seenUpper) break;
+      }
+      if (!seenUpper || gap > 0) {
+        holes++;
+        if (gap > worst) { worst = gap; worstX = x; }
+      }
+    }
+    if (!holes) return [];
+    return ['waist ' + model.body.id + '/' + model.pose.id + ' holes ' + holes + ' worst ' + worst + 'px @' + worstX];
+  }
+
   function audit(model, shapes) {
     var problems = [];
     var gap = COLLAR_TOP - HEAD_BOTTOM;
@@ -1131,6 +1407,8 @@
       }
       if (!(minX < 100 && maxX > 280)) problems.push('back sheet ' + minX + ' ' + maxX);
     }
+    var waist = waistIssues(model, shapes);
+    for (i = 0; i < waist.length; i++) problems.push(waist[i]);
     return problems;
   }
 
