@@ -1,4 +1,4 @@
-# 你可能不知道 · 小工具 v1.4
+# 你可能不知道 · 小工具 v1.5
 
 离线好奇心闯关。每局从内置题库无放回抽 5 题，四选一，限时 14 秒。结算抽一张卡：卡面只有指纹形象、四字中文名和指纹码。分数、答对、用时和称号在卡外的「本局详情」。
 
@@ -14,11 +14,15 @@ python3 -m http.server 8765
 
 ## 题库
 
-**64 题。** 指纹用 6 bit 存题号，编码固定 12 位（`XXXX-XXXX-XXXX`），所以没有扩到 80–100。再加题要升指纹版本。题只能在 `data/bank.js` 末尾追加，不能插队或重排。
+**200 题。** 仍是四选一，每局无放回抽 5 题。难度 1 / 2 / 3 分别对应眼熟、冷门、猎奇。题只能在 `data/bank.js` 末尾追加，不能插队或重排。
+
+指纹仍是 12 位（`XXXX-XXXX-XXXX`）。v1 用 6 bit 存题号，只够 64 题。v1.5 起新局写 v2：题号 8 bit（到 255），用时收成 4 秒一档，校验不变。已经发出的 v1 码还能解码。
+
+自检：`node scripts/validate_bank.mjs`
 
 ## 上传包
 
-`dist/你可能不知道-v1.4.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
+`dist/你可能不知道-v1.5.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
 
 重新打包（`scripts/` 不要打进 zip）：
 
@@ -32,8 +36,12 @@ cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.4.zip" . -x '*.DS_Store'
+cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.5.zip" . -x '*.DS_Store'
 ```
+
+## v1.5
+
+题库从 64 加到 200，只在末尾追加。新局指纹升到 v2，题号改用 8 bit，用时改成 4 秒一档，卡面仍是 12 位。
 
 ## v1.4
 
@@ -50,5 +58,5 @@ cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.4.zip" . -x 
 ## 已知缺口
 
 - 没在小红书真机或 Chrome 61 WebView 上复测这一版。脚本按 ES2017 写，样式按 Chrome 61 基线写。
-- 题库仍是 64。
+- 指纹 v2 逆推出来的用时是 0 / 4 / 8 / 12 秒，卡上存的逐题用时仍是原值。
 - 相册保存依赖容器里的 `saveImageToPhotosAlbum`。
