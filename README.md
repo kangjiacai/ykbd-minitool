@@ -1,4 +1,4 @@
-# 你可能不知道 · 小工具 v1.6.0
+# 你可能不知道 · 小工具 v1.7.0
 
 离线好奇心闯关。每局从内置题库无放回抽 5 题，四选一，限时 14 秒。结算抽一张卡：卡面只有指纹形象、四字中文名和指纹码。分数、答对、用时和称号在卡外的「本局详情」。
 
@@ -22,7 +22,7 @@ python3 -m http.server 8765
 
 ## 上传包
 
-`dist/你可能不知道-v1.6.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
+`dist/你可能不知道-v1.7.zip`，根目录是 `index.html`。`mini_tool.json` 为 `is_high_consumption_scene: false`。动效清单见 `MOTION.md`。
 
 重新打包（`scripts/` 不要打进 zip）：
 
@@ -36,12 +36,24 @@ cp data/bank.js /tmp/ykbd-stage/data/
 cp fonts/*.woff2 /tmp/ykbd-stage/fonts/
 node scripts/write_manifest.mjs /tmp/ykbd-stage false
 node scripts/audit_artifact.mjs /tmp/ykbd-stage
-rm -f "dist/你可能不知道-v1.6.zip"
-( cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.6.zip" . -x '*.DS_Store' )
-node scripts/audit_artifact.mjs "dist/你可能不知道-v1.6.zip"
+rm -f "dist/你可能不知道-v1.7.zip"
+( cd /tmp/ykbd-stage && zip -r -X "$OLDPWD/dist/你可能不知道-v1.7.zip" . -x '*.DS_Store' )
+node scripts/audit_artifact.mjs "dist/你可能不知道-v1.7.zip"
+node scripts/share_flow.test.mjs
+node scripts/waist_check.mjs
 ```
 
 包内只允许这些后缀：jpg、jpeg、css、gif、svg、png、js、json、html、woff、woff2、webp。其它类型（包括 ico）会让 `audit_artifact.mjs` 失败。
+
+## v1.7.0
+
+结算页和卡包详情加了「用这张卡发笔记」。点下去才画卡：形象走 SVG → data URI → Image → canvas（1080×1440），卡面仍只有形象、四字名和编码。分数、答对、用时写进笔记正文。先 `writeTempFile` 换本地路径，失败再把 data URI 交给 `postNote`（`photo_publish`）。容器里没有这个方法时，轻提示「请在小红书 App 内使用」。
+
+「我的」标题旁和结算页底部有「关注作者」。只在客户端 9.51+（`buildVersion / 1000 >= 9510`）且 `followAuthor` / `getFollowStatus` 都在时出现。未关注显示按钮，已关注禁用成「已关注」，作者本人隐藏。用户关掉确认框不提示；当天次数用完提示「今天先到这儿啦」。
+
+短袖和衬衣的腰上原来会露出底。非连衣裙的下摆锁在同一条 HEM_Y，压过腿根至少 2px；连衣裙仍是裙子加大腿。腰缝按像素扫，并核对下摆高度。
+
+自检：`node scripts/share_flow.test.mjs` 和 `node scripts/waist_check.mjs`
 
 ## v1.6.0
 
@@ -67,4 +79,4 @@ node scripts/audit_artifact.mjs "dist/你可能不知道-v1.6.zip"
 
 - 没在小红书真机或 Chrome 61 WebView 上复测这一版。脚本按 ES2017 写，样式按 Chrome 61 基线写。
 - 指纹 v2 逆推出来的用时是 0 / 4 / 8 / 12 秒，卡上存的逐题用时仍是原值。
-- 相册保存依赖容器里的 `saveImageToPhotosAlbum`。
+- 相册保存依赖容器里的 `saveImageToPhotosAlbum`。发笔记依赖 `postNote`，关注作者依赖客户端 9.51+。

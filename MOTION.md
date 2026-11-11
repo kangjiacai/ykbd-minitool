@@ -14,7 +14,7 @@
 | # | 位置 | 目的 | 频率 | 做法 |
 | --- | --- | --- | --- | --- |
 | 1 | 四选一 `.opt:active` | Feedback | 每局几次 | `transform` 160ms `--ease-out`，按下 `translate(2px,2px) scale(0.97)` |
-| 2 | 主按钮 `.btn-main` `.act` `.row-link` `.pack-item` `.dex-item` `.text-back` | Feedback | 偶尔到每天十几次 | 同上 160ms `--ease-out` |
+| 2 | 主按钮 `.btn-main` `.btn-post` `.act` `.row-link` `.pack-item` `.dex-item` `.text-back` `.follow-btn` `.dock-link` | Feedback | 偶尔到每天十几次 | 同上 160ms `--ease-out` |
 | 3 | 答题表 `.sheet-bottom` / `.sheet-panel` | Spatial | 每题一次 | 遮罩 `opacity` 280ms `--ease-drawer`；面板 `translateY(100%)` ↔ `0`，同曲线同时长。CSS transition，可从半途折返 |
 | 4 | 答对 `.opt.ok` | State | 每局最多 5 次 | `opt-ok` 160ms `--ease-out`，从 `scale(0.97)` 回到 1。底色仍瞬间切换（不动画 `background-color`） |
 | 5 | 结算卡 `.gacha-fit.enter` | Delight | 每局一次 | `card-in` 280ms `--ease-out`，`scale(0.95)` + `opacity: 0` → 到位。同一张卡不重播 |

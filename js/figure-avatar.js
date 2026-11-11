@@ -322,15 +322,20 @@
     long: 'swept', pony: 'fringe', afro: 'curly', shoulder: 'swept', spiky: 'spiky',
     buzz: 'buzz', swoop: 'swoop'
   };
-  /* 领口开口各款共用，衣身下摆和肩宽按款式分开。 */
+  /* 非连衣裙共用一条下摆。必须压过三种腿根（最低约 y514）至少 2px。 */
+  var HEM_Y = 518;
+  function hemLine(x0, x1) {
+    return ' L' + x1 + ' ' + HEM_Y + ' L' + x0 + ' ' + HEM_Y + ' Z';
+  }
+  /* 领口开口各款共用，肩宽仍按款式分开，下摆锁在 HEM_Y。 */
   var TORSO = {
-    tee: 'M136 348 C136 318 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 264 318 264 348 L262 446 C246 464 154 464 138 446 Z',
-    sweater: 'M108 334 C108 308 138 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C262 290 292 308 292 334 L296 512 C284 556 116 556 104 512 Z',
-    shirt: 'M124 348 C124 316 146 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 290 276 316 276 348 L270 468 C286 524 236 498 200 490 C164 498 114 524 130 468 Z',
-    hoodie: 'M102 352 C102 318 140 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C260 290 298 318 298 352 L304 548 L96 548 Z',
-    stripes: 'M98 362 C116 332 146 304 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 304 284 332 302 362 L296 508 C272 528 128 528 104 508 Z',
-    vest: 'M118 344 C118 314 144 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C256 290 282 314 282 344 L276 524 C258 542 142 542 124 524 Z',
-    overalls: 'M132 346 C132 316 148 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C252 290 268 316 268 346 L264 430 C248 446 152 446 136 430 Z',
+    tee: 'M136 348 C136 318 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 264 318 264 348' + hemLine(136, 264),
+    sweater: 'M108 334 C108 308 138 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C262 290 292 308 292 334' + hemLine(104, 296),
+    shirt: 'M124 348 C124 316 146 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 290 276 316 276 348' + hemLine(124, 276),
+    hoodie: 'M102 352 C102 318 140 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C260 290 298 318 298 352' + hemLine(96, 304),
+    stripes: 'M98 362 C116 332 146 304 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C254 304 284 332 302 362' + hemLine(104, 296),
+    vest: 'M118 344 C118 314 144 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C256 290 282 314 282 344' + hemLine(124, 276),
+    overalls: 'M132 346 C132 316 148 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C252 290 268 316 268 346' + hemLine(132, 268),
     dress: 'M134 346 C134 316 150 290 164 290 ' + 'L176 290 L176 324 C180 336 220 336 224 324 L224 290 L236 290' + ' C250 290 266 316 266 346 L262 432 C246 450 154 450 138 432 Z'
   };
   var SKIRT = 'M150 428 C108 468 64 548 58 602 C130 624 270 624 342 602 C336 548 292 468 250 428 C220 448 180 448 150 428 Z';
@@ -621,25 +626,25 @@
       add('hood', P('M186 348 L176 418 M214 348 L224 418', 'none', INK, 4));
       add('hood', Ci(176, 422, 7, C.accent, INK, 3));
       add('hood', Ci(224, 422, 7, C.accent, INK, 3));
-      add('pocket', P('M132 468 L148 424 L252 424 L268 468 L260 530 L140 530 Z', C.deep, INK, 5));
+      add('pocket', P('M132 450 L148 408 L252 408 L268 450 L260 ' + (HEM_Y - 16) + ' L140 ' + (HEM_Y - 16) + ' Z', C.deep, INK, 5));
     } else if (body === 'overalls') {
       add('body', P('M146 330 L158 392 M254 330 L242 392', 'none', C.main, 12));
       add('body', P('M146 330 L158 392 M254 330 L242 392', 'none', INK, 3));
-      add('body', P('M148 378 L252 378 L270 530 C236 552 164 552 130 530 Z', C.main, INK, 5));
+      add('body', P('M148 378 L252 378 L278 ' + HEM_Y + ' L122 ' + HEM_Y + ' Z', C.main, INK, 5));
       add('button', Ci(162, 396, 6, INK, 'none', 0));
       add('button', Ci(238, 396, 6, INK, 'none', 0));
       add('pocket', P('M176 412 L224 412 L224 448 L176 448 Z', 'none', INK, 4));
     } else if (body === 'shirt') {
       add('collar', P('M164 292 L148 348 L188 338 Z', shirt, INK, 4.5));
       add('collar', P('M236 292 L252 348 L212 338 Z', shirt, INK, 4.5));
-      add('body', P('M200 336 L200 478', 'none', INK, 4));
+      add('body', P('M200 336 L200 ' + (HEM_Y - 22), 'none', INK, 4));
       add('button', Ci(200, 360, 5, C.accent, INK, 2));
       add('button', Ci(200, 396, 5, C.accent, INK, 2));
       add('button', Ci(200, 432, 5, C.accent, INK, 2));
       add('pocket', P('M214 390 L248 390 L248 422 L214 422 Z', 'none', INK, 4));
     } else if (body === 'sweater') {
       add('collar', P('M150 306 Q200 336 250 306', 'none', C.deep, 12));
-      add('body', P('M112 492 L288 492 L278 548 C236 564 164 564 122 548 Z', C.deep, INK, 5));
+      add('body', P('M112 ' + (HEM_Y - 28) + ' L288 ' + (HEM_Y - 28) + ' L296 ' + HEM_Y + ' L104 ' + HEM_Y + ' Z', C.deep, INK, 5));
     } else if (body === 'dress') {
       add('body', P(SKIRT, shirt, INK, SW));
       add('body', P('M154 440 L246 440', 'none', INK, 5));
@@ -1063,6 +1068,313 @@
     }
     return found;
   }
+  /* 把路径铺成折线。误差收到约 0.5px，腰部扫描才不会把缝认丢或认多。 */
+  function pathRings(d) {
+    var tokens = [];
+    var i = 0;
+    var n = d.length;
+    while (i < n) {
+      var c = d.charAt(i);
+      if (c === ' ' || c === ',' || c === '\n' || c === '\t' || c === '\r') { i++; continue; }
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) { tokens.push(c); i++; continue; }
+      var j = i;
+      if (c === '-' || c === '+') j++;
+      var dot = 0;
+      while (j < n) {
+        var ch = d.charAt(j);
+        if (ch >= '0' && ch <= '9') { j++; continue; }
+        if (ch === '.' && !dot) { dot = 1; j++; continue; }
+        break;
+      }
+      tokens.push(parseFloat(d.slice(i, j)));
+      i = j;
+    }
+    var rings = [];
+    var cur = null;
+    var sx = 0;
+    var sy = 0;
+    var cx = 0;
+    var cy = 0;
+    var k = 0;
+    function num() { return tokens[k++]; }
+    function pushPt(x, y) { cur.push({ x: x, y: y }); }
+    function lineTo(x, y) {
+      pushPt(x, y);
+      cx = x;
+      cy = y;
+    }
+    function flat(x0, y0, x1, y1, x2, y2, x3, y3, depth) {
+      var dx = x3 - x0;
+      var dy = y3 - y0;
+      var d1 = Math.abs((x1 - x3) * dy - (y1 - y3) * dx);
+      var d2 = Math.abs((x2 - x3) * dy - (y2 - y3) * dx);
+      var len2 = dx * dx + dy * dy;
+      if (depth > 8 || (d1 + d2) * (d1 + d2) <= 0.25 * len2 + 1e-4) {
+        pushPt(x3, y3);
+        return;
+      }
+      var x01 = (x0 + x1) / 2;
+      var y01 = (y0 + y1) / 2;
+      var x12 = (x1 + x2) / 2;
+      var y12 = (y1 + y2) / 2;
+      var x23 = (x2 + x3) / 2;
+      var y23 = (y2 + y3) / 2;
+      var x012 = (x01 + x12) / 2;
+      var y012 = (y01 + y12) / 2;
+      var x123 = (x12 + x23) / 2;
+      var y123 = (y12 + y23) / 2;
+      var xm = (x012 + x123) / 2;
+      var ym = (y012 + y123) / 2;
+      flat(x0, y0, x01, y01, x012, y012, xm, ym, depth + 1);
+      flat(xm, ym, x123, y123, x23, y23, x3, y3, depth + 1);
+    }
+    while (k < tokens.length) {
+      var cmd = tokens[k++];
+      if (cmd === 'M') {
+        if (cur && cur.length) rings.push(cur);
+        cx = num();
+        cy = num();
+        sx = cx;
+        sy = cy;
+        cur = [{ x: cx, y: cy }];
+      } else if (cmd === 'L') {
+        lineTo(num(), num());
+      } else if (cmd === 'H') {
+        lineTo(num(), cy);
+      } else if (cmd === 'V') {
+        lineTo(cx, num());
+      } else if (cmd === 'C') {
+        var x1 = num();
+        var y1 = num();
+        var x2 = num();
+        var y2 = num();
+        var x = num();
+        var y = num();
+        flat(cx, cy, x1, y1, x2, y2, x, y, 0);
+        cx = x;
+        cy = y;
+      } else if (cmd === 'Q') {
+        var qx = num();
+        var qy = num();
+        var xz = num();
+        var yz = num();
+        flat(cx, cy, cx + (2 / 3) * (qx - cx), cy + (2 / 3) * (qy - cy), xz + (2 / 3) * (qx - xz), yz + (2 / 3) * (qy - yz), xz, yz, 0);
+        cx = xz;
+        cy = yz;
+      } else if (cmd === 'Z' || cmd === 'z') {
+        if (cur && (cx !== sx || cy !== sy)) lineTo(sx, sy);
+        cx = sx;
+        cy = sy;
+      } else {
+        break;
+      }
+    }
+    if (cur && cur.length) rings.push(cur);
+    return rings;
+  }
+  function dilateMask(src, w, h, radius) {
+    var out = new Uint8Array(src.length);
+    var r2 = radius * radius;
+    var y;
+    var x;
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        if (!src[y * w + x]) continue;
+        var dy;
+        var dx;
+        for (dy = -radius; dy <= radius; dy++) {
+          var yy = y + dy;
+          if (yy < 0 || yy >= h) continue;
+          for (dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > r2) continue;
+            var xx = x + dx;
+            if (xx < 0 || xx >= w) continue;
+            out[yy * w + xx] = 1;
+          }
+        }
+      }
+    }
+    return out;
+  }
+  function paintRings(mask, w, y0, y1, rings, bit, radius) {
+    var hgt = y1 - y0;
+    var tmp = radius > 0 ? new Uint8Array(w * hgt) : null;
+    var dest = tmp || mask;
+    var paintBit = tmp ? 1 : bit;
+    var edges = [];
+    var r;
+    var i;
+    for (r = 0; r < rings.length; r++) {
+      var pts = rings[r];
+      var count = pts.length;
+      if (count < 2) continue;
+      var last = pts[count - 1];
+      var first = pts[0];
+      var closed = last.x === first.x && last.y === first.y;
+      var m = closed ? count - 1 : count;
+      for (i = 0; i < m; i++) {
+        var a = pts[i];
+        var b = pts[(i + 1) % m];
+        if (a.y === b.y) continue;
+        var down = a.y < b.y;
+        edges.push({
+          yMin: down ? a.y : b.y,
+          yMax: down ? b.y : a.y,
+          x0: down ? a.x : b.x,
+          yBase: down ? a.y : b.y,
+          dx: (b.x - a.x) / (b.y - a.y),
+          wind: down ? 1 : -1
+        });
+      }
+    }
+    var y;
+    for (y = y0; y < y1; y++) {
+      var yy = y + 0.5;
+      var hits = [];
+      for (i = 0; i < edges.length; i++) {
+        var ed = edges[i];
+        if (yy >= ed.yMin && yy < ed.yMax) hits.push({ x: ed.x0 + ed.dx * (yy - ed.yBase), wind: ed.wind });
+      }
+      if (!hits.length) continue;
+      hits.sort(function (p, q) { return p.x - q.x; });
+      var wind = 0;
+      var h;
+      for (h = 0; h < hits.length; h++) {
+        if (wind !== 0 && h > 0) {
+          var x0 = hits[h - 1].x;
+          var x1 = hits[h].x;
+          var xa = Math.ceil(x0 - 0.5);
+          var xb = Math.floor(x1 - 0.5);
+          if (xa < 0) xa = 0;
+          if (xb > w - 1) xb = w - 1;
+          var row = (y - y0) * w;
+          var p;
+          for (p = xa; p <= xb; p++) dest[row + p] |= paintBit;
+        }
+        wind += hits[h].wind;
+      }
+    }
+    if (!tmp) return;
+    var grown = dilateMask(tmp, w, hgt, radius);
+    var n;
+    for (n = 0; n < grown.length; n++) if (grown[n]) mask[n] |= bit;
+  }
+  /* 光栅：躯干/裤腰/裙子为上装，腿为下装。腰缝按像素看，不用包围盒。 */
+  function waistIssues(model, shapes) {
+    var y0 = 340;
+    var y1 = 680;
+    var w = VIEW_W;
+    var mask = new Uint8Array(w * (y1 - y0));
+    var UPPER = 1;
+    var LEG = 2;
+    var s;
+    for (s = 0; s < shapes.length; s++) {
+      var sh = shapes[s];
+      if (!sh || sh.op !== 'path' || !sh.d || sh.fill === 'none' || !sh.fill) continue;
+      var bit = 0;
+      if (sh.part === 'body') bit = UPPER;
+      else if (sh.part === 'leg') bit = LEG;
+      if (!bit) continue;
+      paintRings(mask, w, y0, y1, pathRings(sh.d), bit, Math.floor((sh.sw || 0) / 2));
+    }
+    function pix(x, y) {
+      if (x < 0 || x >= w || y < y0 || y >= y1) return 0;
+      return mask[(y - y0) * w + x];
+    }
+    var yTop = 1e9;
+    var y;
+    var x;
+    for (y = y0; y < y1; y++) {
+      for (x = 0; x < w; x++) {
+        if ((pix(x, y) & LEG) && y < yTop) yTop = y;
+      }
+    }
+    if (yTop === 1e9) return ['waist ' + model.body.id + '/' + model.pose.id + ' no legs'];
+    var left = 1e9;
+    var right = -1;
+    /* 只取腿根那一截的外沿，不把迈步时撇开的小腿算进腰宽。 */
+    var yBand = yTop + 8;
+    for (y = yTop; y <= yBand && y < y1; y++) {
+      for (x = 0; x < w; x++) {
+        if (!(pix(x, y) & LEG)) continue;
+        if (x < left) left = x;
+        if (x > right) right = x;
+      }
+    }
+    if (left > right) return ['waist ' + model.body.id + '/' + model.pose.id + ' no leg top'];
+    var holes = 0;
+    var worst = 0;
+    var worstX = left;
+    for (x = left; x <= right; x++) {
+      var yLeg = -1;
+      for (y = yTop; y < y1 && y <= yTop + 24; y++) {
+        if (pix(x, y) & LEG) { yLeg = y; break; }
+      }
+      /* 两腿之间没有腿像素时，裤腰仍要盖到最高的腿根，不能留出中线缺口。 */
+      var yLine = yLeg >= 0 ? yLeg : yTop;
+      var row0 = pix(x, yLine);
+      var row1 = pix(x, yLine + 1);
+      var overlap = ((row0 & UPPER) ? 1 : 0) + ((row1 & UPPER) ? 1 : 0);
+      if (!(row0 & (UPPER | LEG)) || !(row1 & (UPPER | LEG)) || overlap < 2) {
+        holes++;
+        var miss = 2 - overlap;
+        if (miss < 1) miss = 1;
+        if (miss > worst) { worst = miss; worstX = x; }
+        continue;
+      }
+      var gap = 0;
+      var seenUpper = false;
+      for (y = yLine; y >= 400; y--) {
+        var p = pix(x, y);
+        if (p & UPPER) seenUpper = true;
+        else if (!(p & LEG)) gap++;
+        if (seenUpper) break;
+      }
+      if (!seenUpper || gap > 0) {
+        holes++;
+        if (gap > worst) { worst = gap; worstX = x; }
+      }
+    }
+    if (!holes) return [];
+    return ['waist ' + model.body.id + '/' + model.pose.id + ' holes ' + holes + ' worst ' + worst + 'px @' + worstX];
+  }
+  /* 非连衣裙的衣身下摆必须整段落在 HEM_Y，不能只靠两侧下探。 */
+  function hemIssues(model, shapes) {
+    if (model.body.id === 'dress') return [];
+    var torso = null;
+    var i;
+    for (i = 0; i < shapes.length; i++) {
+      var sh = shapes[i];
+      if (sh.part === 'body' && sh.op === 'path' && sh.fill && sh.fill !== 'none') {
+        torso = sh;
+        break;
+      }
+    }
+    if (!torso) return ['hem ' + model.body.id + ' missing'];
+    var y0 = 280;
+    var y1 = 650;
+    var w = VIEW_W;
+    var mask = new Uint8Array(w * (y1 - y0));
+    paintRings(mask, w, y0, y1, pathRings(torso.d), 1, 0);
+    var expect = HEM_Y - 1;
+    var bad = 0;
+    var sample = '';
+    var x;
+    var y;
+    for (x = 150; x <= 250; x++) {
+      var bottom = -1;
+      for (y = y1 - 1; y >= y0; y--) {
+        if (mask[(y - y0) * w + x]) { bottom = y; break; }
+      }
+      if (bottom !== expect) {
+        bad++;
+        if (!sample) sample = 'x' + x + '=' + bottom;
+      }
+    }
+    if (!bad) return [];
+    return ['hem ' + model.body.id + '/' + model.pose.id + ' ' + bad + ' ' + sample + ' want ' + expect];
+  }
+
   function audit(model, shapes) {
     var problems = [];
     var gap = COLLAR_TOP - HEAD_BOTTOM;
@@ -1131,6 +1443,10 @@
       }
       if (!(minX < 100 && maxX > 280)) problems.push('back sheet ' + minX + ' ' + maxX);
     }
+    var waist = waistIssues(model, shapes);
+    for (i = 0; i < waist.length; i++) problems.push(waist[i]);
+    var hem = hemIssues(model, shapes);
+    for (i = 0; i < hem.length; i++) problems.push(hem[i]);
     return problems;
   }
 
@@ -1150,6 +1466,7 @@
     combo: comboCount(),
     HAIR_TYPE: HAIR_TYPE,
     hairs: HAIR,
+    HEM_Y: HEM_Y,
     anchors: {
       headCx: HEAD_CX,
       headCy: HEAD_CY,

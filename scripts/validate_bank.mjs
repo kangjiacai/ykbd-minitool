@@ -109,9 +109,9 @@ if (!oldRound || oldRound[0].idx !== 1 || oldRound[2].correct !== false || oldRo
 }
 if (F.decode('0000-0000-0000') !== null) errors.push('bogus code accepted');
 
-const text = fs.readFileSync(path.join(root, 'data/bank.js'), 'utf8')
-  + fs.readFileSync(path.join(root, 'index.html'), 'utf8')
-  + fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const text = ['data/bank.js', 'index.html', 'js/app.js', 'js/share.js', 'js/platform.js', 'js/render.js', 'css/app.css']
+  .map((name) => fs.readFileSync(path.join(root, name), 'utf8'))
+  .join('\n');
 if (text.includes('冷知识')) errors.push('冷知识 still in sources');
 
 if (errors.length) {
